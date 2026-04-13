@@ -65,7 +65,8 @@ Scope {
         var idx = 0
         if (wallpaperSelector._restorePending) {
           wallpaperSelector._restorePending = false
-          idx = Math.min(wallpaperSelector.lastIndex, service.filteredModel.count - 1)
+          if (Config.reopenAtLastSelection)
+            idx = Math.min(wallpaperSelector.lastIndex, service.filteredModel.count - 1)
         } else if (wallpaperSelector.showing && wallpaperSelector._preCommitIndex >= 0) {
           idx = Math.min(wallpaperSelector._preCommitIndex, service.filteredModel.count - 1)
         }
@@ -78,17 +79,51 @@ Scope {
         _snapshotFadeOut.start()
       }
     }
-    onWallpaperApplied: wallpaperSelector.wallpaperChanged()
+    onWallpaperApplied: {
+      wallpaperSelector.wallpaperChanged()
+      if (Config.closeOnSelection)
+        wallpaperSelector.showing = false
+    }
   }
 
   onShowingChanged: {
     if (showing) {
-      _restorePending = true
-      _bindActiveViewModel()
-      service.startCacheCheck()
-      cardShowTimer.restart()
+      if (Config.reopenAtLastSelection) {
+        _restorePending = true
+        DaemonClient.stateGet("ui.lastPosition", function(result) {
+          if (result && result.value) {
+            try {
+              var pos = JSON.parse(result.value)
+              wallpaperSelector.lastIndex = pos.sliceIndex ?? 0
+              wallpaperSelector.lastHexCol = pos.hexCol ?? -1
+              wallpaperSelector.lastHexRow = pos.hexRow ?? 0
+              wallpaperSelector.lastGridIndex = pos.gridIndex ?? 0
+            } catch(e) {}
+          }
+          _bindActiveViewModel()
+          service.startCacheCheck()
+          cardShowTimer.restart()
+        })
+      } else {
+        _restorePending = true
+        _bindActiveViewModel()
+        service.startCacheCheck()
+        cardShowTimer.restart()
+      }
     } else {
       cardShowTimer.stop()
+      if (Config.reopenAtLastSelection) {
+        lastIndex = sliceListView.currentIndex
+        lastHexCol = hexListView._selectedCol
+        lastHexRow = hexListView._selectedRow
+        lastGridIndex = thumbGridView.hoveredIdx
+        DaemonClient.stateSet("ui.lastPosition", JSON.stringify({
+          sliceIndex: lastIndex,
+          hexCol: lastHexCol,
+          hexRow: lastHexRow,
+          gridIndex: lastGridIndex
+        }))
+      }
       cardVisible = false
       settingsOpen = false
       if (gridBackOverlay.overlayOpen) { gridBackOverlay.overlayOpen = false; gridBackOverlay.visible = false; gridBackOverlay.overlayItemKey = "" }
@@ -287,13 +322,17 @@ Scope {
   Behavior on _settingsShift { NumberAnimation { duration: 500; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
   property real lastContentX: 0
   property int lastIndex: 0
+  property int lastHexCol: -1
+  property int lastHexRow: 0
+  property int lastGridIndex: 0
   property bool _restorePending: false
   property int _preCommitIndex: -1
   property bool cardVisible: false
   PanelWindow {
     id: selectorPanel
 
-    screen: Quickshell.screens.find(s => s.name === wallpaperSelector.mainMonitor) ?? Quickshell.screens[0]
+    screen: Quickshell.screens.find(s => s.name === wallpaperSelector.mainMonitor)
+        ?? Quickshell.screens[0]
 
     anchors {
       top: true
@@ -721,11 +760,21 @@ Scope {
         if (visible && !wallpaperSelector.tagCloudVisible) forceActiveFocus()
         if (visible) {
           _initialSnap = true
+          _restored = false
           highlightMoveDuration = 0
-          var startCol = Math.min(Math.floor(wallpaperSelector.hexCols / 2), count - 1)
-          if (startCol >= 0) { currentIndex = startCol; _selectedCol = startCol; _selectedRow = 0 }
+          var startCol
+          if (Config.reopenAtLastSelection && wallpaperSelector.lastHexCol >= 0) {
+            startCol = Math.min(wallpaperSelector.lastHexCol, count - 1)
+            if (startCol >= 0) { currentIndex = startCol; _selectedCol = startCol; _selectedRow = wallpaperSelector.lastHexRow }
+            _restored = true
+          } else {
+            startCol = Math.min(Math.floor(wallpaperSelector.hexCols / 2), count - 1)
+            if (startCol >= 0) { currentIndex = startCol; _selectedCol = startCol; _selectedRow = 0 }
+          }
           positionViewAtIndex(currentIndex, ListView.Center)
           _snapRestoreTimer.restart()
+        } else {
+          _restored = false
         }
       }
 
@@ -740,8 +789,9 @@ Scope {
 
       model: Math.ceil((service.filteredModel ? service.filteredModel.count : 0) / Math.max(1, _rows))
 
+      property bool _restored: false
       onCountChanged: {
-        if (count > 0 && visible && !wallpaperSelector.tagCloudVisible) {
+        if (count > 0 && visible && !wallpaperSelector.tagCloudVisible && !_restored) {
           var startCol = Math.min(Math.floor(wallpaperSelector.hexCols / 2), count - 1)
           if (startCol >= 0) { currentIndex = startCol; _selectedCol = startCol; _selectedRow = 0 }
         }
@@ -983,6 +1033,10 @@ Scope {
       focus: wallpaperSelector.showing && wallpaperSelector.isGridMode && !wallpaperSelector.tagCloudVisible
       onVisibleChanged: {
         if (visible && !wallpaperSelector.tagCloudVisible) forceActiveFocus()
+        if (visible && Config.reopenAtLastSelection && wallpaperSelector.lastGridIndex > 0) {
+          hoveredIdx = Math.min(wallpaperSelector.lastGridIndex, count - 1)
+          positionViewAtIndex(hoveredIdx, GridView.Center)
+        }
       }
 
       Keys.onEscapePressed: {

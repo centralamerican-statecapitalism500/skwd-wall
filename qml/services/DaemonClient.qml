@@ -97,6 +97,13 @@ QtObject {
         call("wall.weather", {}, callback)
     }
 
+    function stateGet(key, callback) {
+        call("state.get", {key: key}, callback)
+    }
+    function stateSet(key, value) {
+        call("state.set", {key: key, value: value})
+    }
+
     property int _nextId: 1
     property var _pending: ({})
 

@@ -75,10 +75,14 @@ Item {
 
     z: isCurrent ? 100 : (isHovered ? 90 : 50 - Math.min(Math.abs(index - (_listView ? _listView.currentIndex : 0)), 50))
 
-    readonly property real _fadeZone: sliceWidth * 1.5
-    readonly property real _center: _listView ? ((x - _listView.contentX) + width * 0.5) : (width * 0.5)
-    opacity: _fadeZone > 0 ? Math.min(Math.min(1.0, Math.max(0.0, _center / _fadeZone)),
-                                      Math.min(1.0, Math.max(0.0, ((_listView ? _listView.width : 0) - _center) / _fadeZone))) : 1.0
+    readonly property int _distFromCurrent: Math.abs(index - (_listView ? _listView.currentIndex : index))
+    readonly property bool _listMoving: _listView ? _listView.moving : false
+    readonly property int _fadeStart: _listView ? Math.max(1, Math.floor(_listView.visibleCount / 2) - 2) : 3
+    opacity: _listMoving ? 1.0 : (_distFromCurrent <= _fadeStart ? 1.0 : Math.max(0.1, 1.0 - (_distFromCurrent - _fadeStart) * 0.3))
+    Behavior on opacity {
+        enabled: !_listMoving
+        NumberAnimation { duration: Style.animMedium; easing.type: Easing.OutQuad }
+    }
     Behavior on width {
         enabled: !suppressWidthAnim
         NumberAnimation { duration: Style.animNormal; easing.type: Easing.OutQuad }

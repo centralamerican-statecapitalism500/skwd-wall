@@ -24,6 +24,7 @@ QtObject {
         preload: true
         onLoaded: {
             service._stateFileLoaded = true
+            service._tryRestore()
         }
     }
 

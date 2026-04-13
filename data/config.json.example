@@ -2,7 +2,9 @@
     "compositor": "niri",
     "monitor": "",
     "general": {
-        "locale": ""
+        "locale": "",
+        "closeOnSelection": false,
+        "reopenAtLastSelection": false
     },
     "paths": {
         "wallpaper": "~/Pictures/Wallpapers",

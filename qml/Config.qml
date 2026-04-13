@@ -59,6 +59,8 @@ QtObject {
     readonly property bool ollamaConsolidateEnabled: _data.ollama?.consolidateEnabled !== false
 
     readonly property string locale: _data.general?.locale ?? ""
+    readonly property bool closeOnSelection: _data.general?.closeOnSelection === true
+    readonly property bool reopenAtLastSelection: _data.general?.reopenAtLastSelection === true
 
     readonly property bool matugenEnabled: _data.features?.matugen !== false
     readonly property bool ollamaEnabled: _data.features?.ollama !== false
@@ -78,6 +80,8 @@ QtObject {
     readonly property int videoTrashDays: _data.performance?.videoTrashDays ?? 7
     readonly property bool autoDeleteImageTrash: _data.performance?.autoDeleteImageTrash === true
     readonly property bool autoDeleteVideoTrash: _data.performance?.autoDeleteVideoTrash === true
+
+    readonly property int maxThumbJobs: _data.performance?.maxThumbJobs ?? 16
 
     readonly property string colorSource: _data.colorSource ?? "ollama"
 

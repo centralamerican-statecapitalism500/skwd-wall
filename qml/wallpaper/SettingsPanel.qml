@@ -77,7 +77,8 @@ Item {
   }
 
   z: 102
-  width: 580
+  width: settingsPanel.activeTab === "performance" ? 780 : 580
+  Behavior on width { NumberAnimation { duration: Style.animFast; easing.type: Easing.OutCubic } }
   height: tabRow.height + contentLoader.height + 36
 
   visible: settingsOpen
@@ -279,6 +280,13 @@ Item {
     }
     Behavior on height { NumberAnimation { duration: Style.animFast; easing.type: Easing.OutCubic } }
 
+    Rectangle {
+      anchors.fill: parent
+      anchors.margins: -8
+      radius: 6
+      color: settingsPanel.colors ? Qt.rgba(settingsPanel.colors.surface.r, settingsPanel.colors.surface.g, settingsPanel.colors.surface.b, 0.5) : Qt.rgba(0, 0, 0, 0.3)
+    }
+
     Row {
       id: selectorContent
       anchors.left: parent.left
@@ -444,7 +452,7 @@ Item {
       spacing: 12
 
       Column {
-        width: (parent.width - 12) / 2
+        width: (parent.width - 24) / 3
         spacing: 6
 
         Text {
@@ -480,7 +488,7 @@ Item {
       }
 
       Column {
-        width: (parent.width - 12) / 2
+        width: (parent.width - 24) / 3
         spacing: 6
 
         Text {
@@ -530,6 +538,32 @@ Item {
           checked: Config.wallpaperColorDots
           onToggle: function(v) { settingsPanel._saveConfigKey("components.wallpaperSelector.showColorDots", v) }
         }
+      }
+
+      Column {
+        width: (parent.width - 24) / 3
+        spacing: 6
+
+        Text {
+          text: "MORE FEATURES"
+          font.family: Style.fontFamily; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 1.5
+          color: settingsPanel.colors ? settingsPanel.colors.tertiary : Qt.rgba(1, 1, 1, 0.5)
+        }
+
+        SettingsToggle {
+          colors: settingsPanel.colors
+          label: "Close on selection"
+          checked: Config.closeOnSelection
+          onToggle: function(v) { settingsPanel._saveConfigKey("general.closeOnSelection", v) }
+        }
+
+        SettingsToggle {
+          colors: settingsPanel.colors
+          label: "Reopen at last selection"
+          checked: Config.reopenAtLastSelection
+          onToggle: function(v) { settingsPanel._saveConfigKey("general.reopenAtLastSelection", v) }
+        }
+
       }
     }
 
@@ -913,7 +947,7 @@ Item {
       spacing: 12
 
       Column {
-        width: (parent.width - parent.spacing * 4 - 2) / 3
+        width: (parent.width - parent.spacing * 6 - 3) / 4
         spacing: 6
 
         Text {
@@ -1011,7 +1045,7 @@ Item {
       }
 
       Item {
-        width: (parent.width - parent.spacing * 4 - 2) / 3
+        width: (parent.width - parent.spacing * 6 - 3) / 4
         height: _videoOptCol.implicitHeight
 
         Column {
@@ -1090,7 +1124,7 @@ Item {
       }
 
       Column {
-        width: (parent.width - parent.spacing * 4 - 2) / 3
+        width: (parent.width - parent.spacing * 6 - 3) / 4
         spacing: 6
 
         Text {
@@ -1155,38 +1189,6 @@ Item {
           onToggle: function(v) { settingsPanel._saveConfigKey("performance.autoDeleteImageTrash", v) }
         }
 
-        Item { width: 1; height: 8 }
-
-        Text {
-          text: "CACHE"
-          font.family: Style.fontFamily; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 1.5
-          color: settingsPanel.colors ? settingsPanel.colors.tertiary : Qt.rgba(1, 1, 1, 0.5)
-        }
-
-        Text {
-          width: parent.width
-          text: "Clear all cached thumbnails and regenerate from scratch."
-          font.family: Style.fontFamily; font.pixelSize: 11; font.letterSpacing: 0.2
-          color: settingsPanel.colors ? Qt.rgba(settingsPanel.colors.surfaceVariantText.r, settingsPanel.colors.surfaceVariantText.g, settingsPanel.colors.surfaceVariantText.b, 0.8) : Qt.rgba(1, 1, 1, 0.5)
-          wrapMode: Text.WordWrap
-          lineHeight: 1.3
-        }
-
-        Item { width: 1; height: 2 }
-
-        Row {
-          spacing: 8
-
-          FilterButton {
-            colors: settingsPanel.colors
-            label: WallpaperCacheService.running ? "CLEARING..." : "CLEAR ALL DATA"
-            skew: 8
-            height: 28
-            enabled: !WallpaperCacheService.running
-            onClicked: settingsPanel.service.clearData()
-          }
-        }
-
         Item { width: 1; height: 4 }
 
         Item {
@@ -1218,6 +1220,71 @@ Item {
               label: "Auto-delete after retention"
               checked: false
             }
+          }
+        }
+      }
+
+      Rectangle {
+        width: 1; anchors.top: parent.top; anchors.bottom: parent.bottom
+        color: settingsPanel.colors ? Qt.rgba(settingsPanel.colors.primary.r, settingsPanel.colors.primary.g, settingsPanel.colors.primary.b, 0.1) : Qt.rgba(1, 1, 1, 0.08)
+      }
+
+      Column {
+        width: (parent.width - parent.spacing * 6 - 3) / 4
+        spacing: 6
+
+        Text {
+          text: "THUMBNAILS"
+          font.family: Style.fontFamily; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 1.5
+          color: settingsPanel.colors ? settingsPanel.colors.tertiary : Qt.rgba(1, 1, 1, 0.5)
+        }
+
+        Text {
+          width: parent.width
+          text: "Maximum number of thumbnail jobs that run in parallel during cache rebuilds."
+          font.family: Style.fontFamily; font.pixelSize: 11; font.letterSpacing: 0.2
+          color: settingsPanel.colors ? Qt.rgba(settingsPanel.colors.surfaceVariantText.r, settingsPanel.colors.surfaceVariantText.g, settingsPanel.colors.surfaceVariantText.b, 0.8) : Qt.rgba(1, 1, 1, 0.5)
+          wrapMode: Text.WordWrap
+          lineHeight: 1.3
+        }
+
+        SettingsInput {
+          colors: settingsPanel.colors
+          label: "Max concurrent jobs"
+          value: Config.maxThumbJobs
+          min: 1; max: 64
+          onCommit: function(v) { settingsPanel._saveConfigKey("performance.maxThumbJobs", v) }
+        }
+
+        Item { width: 1; height: 8 }
+
+        Text {
+          text: "CACHE"
+          font.family: Style.fontFamily; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 1.5
+          color: settingsPanel.colors ? settingsPanel.colors.tertiary : Qt.rgba(1, 1, 1, 0.5)
+        }
+
+        Text {
+          width: parent.width
+          text: "Clear all cached thumbnails and regenerate from scratch."
+          font.family: Style.fontFamily; font.pixelSize: 11; font.letterSpacing: 0.2
+          color: settingsPanel.colors ? Qt.rgba(settingsPanel.colors.surfaceVariantText.r, settingsPanel.colors.surfaceVariantText.g, settingsPanel.colors.surfaceVariantText.b, 0.8) : Qt.rgba(1, 1, 1, 0.5)
+          wrapMode: Text.WordWrap
+          lineHeight: 1.3
+        }
+
+        Item { width: 1; height: 2 }
+
+        Row {
+          spacing: 8
+
+          FilterButton {
+            colors: settingsPanel.colors
+            label: WallpaperCacheService.running ? "CLEARING..." : "CLEAR ALL DATA"
+            skew: 8
+            height: 28
+            enabled: !WallpaperCacheService.running
+            onClicked: settingsPanel.service.clearData()
           }
         }
       }
