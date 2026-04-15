@@ -9,6 +9,9 @@ import "../services"
 Item {
     id: delegateItem
 
+    required property int index
+    required property var model
+
     property var colors
     property int expandedWidth: 768
     property int sliceWidth: 108
@@ -23,11 +26,11 @@ Item {
     readonly property var _listView: ListView.view
 
     onFlippedChanged: {
-        if (flipped && model.type !== "we") {
-            var key = ImageService.thumbKey(model.thumb, model.name)
+        if (flipped && delegateItem.model.type !== "we") {
+            var key = ImageService.thumbKey(delegateItem.model.thumb, delegateItem.model.name)
             _backMeta = FileMetadataService.getMetadata(key)
             if (!_backMeta)
-                FileMetadataService.probeIfNeeded(key, model.path, model.type === "video" ? "video" : "image")
+                FileMetadataService.probeIfNeeded(key, delegateItem.model.path, delegateItem.model.type === "video" ? "video" : "image")
         }
         if (!flipped) {
             addTagField._syncing = true; addTagField.text = ""; addTagField._sessionTags = []; addTagField._syncing = false
@@ -37,7 +40,7 @@ Item {
         target: FileMetadataService
         enabled: delegateItem.flipped
         function onMetadataReady(key) {
-            var myKey = ImageService.thumbKey(model.thumb, model.name)
+            var myKey = ImageService.thumbKey(delegateItem.model.thumb, delegateItem.model.name)
             if (key === myKey)
                 delegateItem._backMeta = FileMetadataService.getMetadata(key)
         }
@@ -50,7 +53,7 @@ Item {
     readonly property real _botLeft: skewOffset >= 0 ? 0 : _skAbs
 
     property bool suppressWidthAnim: false
-    property string videoPath: model.videoFile ? model.videoFile : ""
+    property string videoPath: delegateItem.model.videoFile ? delegateItem.model.videoFile : ""
     property bool hasVideo: videoPath.length > 0 && Config.videoPreviewEnabled
     property bool videoActive: false
 
@@ -75,17 +78,15 @@ Item {
 
     z: isCurrent ? 100 : (isHovered ? 90 : 50 - Math.min(Math.abs(index - (_listView ? _listView.currentIndex : 0)), 50))
 
-    readonly property int _distFromCurrent: Math.abs(index - (_listView ? _listView.currentIndex : index))
-    readonly property bool _listMoving: _listView ? _listView.moving : false
-    readonly property int _fadeStart: _listView ? Math.max(1, Math.floor(_listView.visibleCount / 2) - 2) : 3
-    opacity: _listMoving ? 1.0 : (_distFromCurrent <= _fadeStart ? 1.0 : Math.max(0.1, 1.0 - (_distFromCurrent - _fadeStart) * 0.3))
-    Behavior on opacity {
-        enabled: !_listMoving
-        NumberAnimation { duration: Style.animMedium; easing.type: Easing.OutQuad }
-    }
+    readonly property real _viewCenterX: _listView ? (_listView.contentX + _listView.width / 2) : 0
+    readonly property real _itemCenterX: x + width / 2
+    readonly property real _halfView: _listView ? _listView.width / 2 : 1
+    readonly property real _fullZone: Math.min(0.6, (expandedWidth / 2 + 2 * (sliceWidth + (_listView ? _listView.spacing : 0))) / _halfView)
+    readonly property real _normDist: Math.abs(_itemCenterX - _viewCenterX) / _halfView
+    opacity: _normDist <= _fullZone ? 1.0 : Math.max(0, 1.0 - (_normDist - _fullZone) / (1.2 - _fullZone))
     Behavior on width {
         enabled: !suppressWidthAnim
-        NumberAnimation { duration: Style.animNormal; easing.type: Easing.OutQuad }
+        NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic }
     }
 
     containmentMask: Item {
@@ -191,7 +192,7 @@ Item {
         Image {
             id: thumbImage
             anchors.fill: parent
-            source: model.thumb ? ImageService.fileUrl(model.thumb) : ""
+            source: delegateItem.model.thumb ? ImageService.fileUrl(delegateItem.model.thumb) : ""
             fillMode: Image.PreserveAspectCrop
             smooth: true
             asynchronous: true
@@ -335,7 +336,7 @@ Item {
         Text {
             id: typeBadgeText
             anchors.centerIn: parent
-            text: model.type === "static" ? "PIC" : ((model.type === "video" || model.videoFile) ? "VID" : "WE")
+            text: delegateItem.model.type === "static" ? "PIC" : ((delegateItem.model.type === "video" || delegateItem.model.videoFile) ? "VID" : "WE")
             font.family: Style.fontFamily
             font.pixelSize: 9
             font.weight: Font.Bold
@@ -353,7 +354,7 @@ Item {
         visible: Config.wallpaperColorDots && wallpaperColors !== undefined
         property var wallpaperColors: {
             if (!delegateItem.service) return undefined
-            var key = model.weId ? model.weId : ImageService.thumbKey(model.thumb, model.name)
+            var key = delegateItem.model.weId ? delegateItem.model.weId : ImageService.thumbKey(delegateItem.model.thumb, delegateItem.model.name)
             if (!key) return undefined
             return delegateItem.service.matugenDb[key]
         }
@@ -431,7 +432,7 @@ Item {
 
             Image {
                 anchors.fill: parent
-                source: ImageService.fileUrl(model.thumb)
+                source: ImageService.fileUrl(delegateItem.model.thumb)
                 fillMode: Image.PreserveAspectCrop
                 opacity: 0.12
                 visible: !(delegateItem.videoActive && delegateItem.flipped)
@@ -450,7 +451,7 @@ Item {
 
                 Text {
                     width: parent.width
-                    text: model.name.replace(/\.[^/.]+$/, "").toUpperCase()
+                    text: delegateItem.model.name.replace(/\.[^/.]+$/, "").toUpperCase()
                     color: delegateItem.colors ? delegateItem.colors.tertiary : "#8bceff"
                     font.family: Style.fontFamily
                     font.pixelSize: 13
@@ -465,11 +466,11 @@ Item {
                 Row {
                     width: parent.width
                     spacing: 0
-                    visible: model.type !== "we"
+                    visible: delegateItem.model.type !== "we"
                     layoutDirection: Qt.LeftToRight
 
                     Text {
-                        text: FileMetadataService.formatExt(model.name)
+                        text: FileMetadataService.formatExt(delegateItem.model.name)
                         color: delegateItem.colors ? Qt.rgba(delegateItem.colors.tertiary.r, delegateItem.colors.tertiary.g, delegateItem.colors.tertiary.b, 0.6) : Qt.rgba(1,1,1,0.35)
                         font.family: Style.fontFamily; font.pixelSize: 10; font.weight: Font.Medium; font.letterSpacing: 0.8
                     }
@@ -512,14 +513,14 @@ Item {
                         width: 48; height: 24
                         property bool checked: false
                         Component.onCompleted: {
-                            var key = (model.weId || "") !== "" ? model.weId : model.name
+                            var key = (delegateItem.model.weId || "") !== "" ? delegateItem.model.weId : delegateItem.model.name
                             checked = delegateItem.service ? !!delegateItem.service.favouritesDb[key] : false
                         }
                         Connections {
                             target: delegateItem
                             function onFlippedChanged() {
                                 if (delegateItem.flipped) {
-                                    var key = (model.weId || "") !== "" ? model.weId : model.name
+                                    var key = (delegateItem.model.weId || "") !== "" ? delegateItem.model.weId : delegateItem.model.name
                                     favToggle.checked = delegateItem.service ? !!delegateItem.service.favouritesDb[key] : false
                                 }
                             }
@@ -558,7 +559,7 @@ Item {
                         }
                         MouseArea {
                             anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                            onClicked: { favToggle.checked = !favToggle.checked; delegateItem.service.toggleFavourite(model.name, model.weId || "") }
+                            onClicked: { favToggle.checked = !favToggle.checked; delegateItem.service.toggleFavourite(delegateItem.model.name, delegateItem.model.weId || "") }
                         }
                     }
                 }
@@ -640,9 +641,9 @@ Item {
                     height: parent.height - y - backActionRow.height - parent.spacing
                     clip: true
 
-                    property string wpName: model.name
-                    property string wpWeId: model.weId || ""
-                    property string wpThumb: model.thumb || ""
+                    property string wpName: delegateItem.model.name
+                    property string wpWeId: delegateItem.model.weId || ""
+                    property string wpThumb: delegateItem.model.thumb || ""
                     property var currentTags: {
                         if (!delegateItem.flipped) return []
                         var db = delegateItem.service ? delegateItem.service.tagsDb : null
@@ -740,25 +741,25 @@ Item {
                     spacing: 6
 
                     ActionButton {
-                        width: model.type === "we" ? (parent.width - parent.spacing * 2) / 3 : (parent.width - parent.spacing) / 2
+                        width: delegateItem.model.type === "we" ? (parent.width - parent.spacing * 2) / 3 : (parent.width - parent.spacing) / 2
                         colors: delegateItem.colors
                         icon: "\u{f0208}"; label: "VIEW"
                         skew: Math.abs(delegateItem.skewOffset) * 0.4
                         onClicked: {
-                            var dir = model.path.substring(0, model.path.lastIndexOf("/"))
+                            var dir = delegateItem.model.path.substring(0, delegateItem.model.path.lastIndexOf("/"))
                             Qt.openUrlExternally(ImageService.fileUrl(dir))
                             delegateItem.flipped = false
                         }
                     }
 
                     ActionButton {
-                        width: model.type === "we" ? (parent.width - parent.spacing * 2) / 3 : (parent.width - parent.spacing) / 2
+                        width: delegateItem.model.type === "we" ? (parent.width - parent.spacing * 2) / 3 : (parent.width - parent.spacing) / 2
                         colors: delegateItem.colors
                         icon: "\u{f0a79}"; label: "DELETE"; danger: true
                         skew: Math.abs(delegateItem.skewOffset) * 0.4
                         onClicked: {
                             var idx = index
-                            delegateItem.service.deleteWallpaperItem(model.type, model.name, model.weId || "")
+                            delegateItem.service.deleteWallpaperItem(delegateItem.model.type, delegateItem.model.name, delegateItem.model.weId || "")
                             var newIdx = Math.min(idx, delegateItem.service.filteredModel.count - 1)
                             if (delegateItem._listView) {
                                 delegateItem._listView.currentIndex = -1
@@ -769,12 +770,12 @@ Item {
                     }
 
                     ActionButton {
-                        visible: model.type === "we"
+                        visible: delegateItem.model.type === "we"
                         width: visible ? (parent.width - parent.spacing * 2) / 3 : 0
                         colors: delegateItem.colors
                         icon: "\u{f0bef}"; label: "STEAM"
                         skew: Math.abs(delegateItem.skewOffset) * 0.4
-                        onClicked: { delegateItem.service.openSteamPage(model.weId || ""); delegateItem.flipped = false }
+                        onClicked: { delegateItem.service.openSteamPage(delegateItem.model.weId || ""); delegateItem.flipped = false }
                     }
                 }
             }
@@ -824,6 +825,7 @@ Item {
         onPositionChanged: function(mouse) {
             if (delegateItem.flipped) return
             if (!delegateItem._listView) return
+            if (delegateItem._listView.moving) return
             var globalPos = mapToItem(delegateItem._listView, mouse.x, mouse.y)
             var dx = Math.abs(globalPos.x - delegateItem._listView.lastMouseX)
             var dy = Math.abs(globalPos.y - delegateItem._listView.lastMouseY)
@@ -840,13 +842,13 @@ Item {
                 delegateItem.flipped = !delegateItem.flipped
             } else if (!delegateItem.flipped) {
                 if (delegateItem.isCurrent) {
-                    console.log("SliceDelegate: applying", model.type, model.path || model.weId)
-                    if (model.type === "we") {
-                        delegateItem.service.applyWE(model.weId)
-                    } else if (model.type === "video") {
-                        delegateItem.service.applyVideo(model.path)
+                    console.log("SliceDelegate: applying", delegateItem.model.type, delegateItem.model.path || delegateItem.model.weId)
+                    if (delegateItem.model.type === "we") {
+                        delegateItem.service.applyWE(delegateItem.model.weId)
+                    } else if (delegateItem.model.type === "video") {
+                        delegateItem.service.applyVideo(delegateItem.model.path)
                     } else {
-                        delegateItem.service.applyStatic(model.path)
+                        delegateItem.service.applyStatic(delegateItem.model.path)
                     }
                 } else {
                     if (delegateItem._listView) delegateItem._listView.currentIndex = index

@@ -551,7 +551,7 @@ Scope {
       flickDeceleration: 1500
       maximumFlickVelocity: 3000
       boundsBehavior: Flickable.StopAtBounds
-      cacheBuffer: Math.round(wallpaperSelector.expandedWidth / 2)
+      cacheBuffer: wallpaperSelector.expandedWidth + sliceListView.visibleCount * (wallpaperSelector.sliceWidth + wallpaperSelector.sliceSpacing)
 
       visible: wallpaperSelector.cardVisible && !wallpaperSelector.anyBrowserOpen && !wallpaperSelector.isHexMode && !wallpaperSelector.isGridMode
 
