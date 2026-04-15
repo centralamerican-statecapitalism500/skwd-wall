@@ -197,17 +197,26 @@ Item {
             smooth: true
             asynchronous: true
             cache: true
-            sourceSize.width: delegateItem.isCurrent ? 400 : Math.ceil(delegateItem.sliceWidth * 1.5)
-            sourceSize.height: delegateItem.isCurrent ? 720 : Math.ceil(delegateItem.height * 0.5)
+            sourceSize.width: 400
+            sourceSize.height: 720
             onStatusChanged: {
                 if (status === Image.Error)
-                    console.warn("[SliceDelegate] Image FAILED for index", delegateItem.index,
-                                 "thumb:", delegateItem.model.thumb,
-                                 "source:", source)
-                else if (status === Image.Null && source !== "")
-                    console.warn("[SliceDelegate] Image NULL for index", delegateItem.index,
-                                 "thumb:", delegateItem.model.thumb,
-                                 "source:", source)
+                    console.warn("[SLICE-DBG] FAILED idx=" + delegateItem.index + " src=" + source)
+            }
+            Component.onCompleted: _diagTimer.restart()
+            Timer {
+                id: _diagTimer
+                interval: 2000
+                onTriggered: {
+                    if (thumbImage.status !== Image.Ready)
+                        console.warn("[SLICE-DBG] NOT READY idx=" + delegateItem.index
+                            + " status=" + thumbImage.status
+                            + " src=" + (thumbImage.source || "(empty)")
+                            + " thumb=" + (delegateItem.model.thumb || "(empty)")
+                            + " w=" + delegateItem.width
+                            + " opacity=" + delegateItem.opacity.toFixed(2)
+                            + " visible=" + delegateItem.visible)
+                }
             }
             opacity: status === Image.Ready ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: Style.animNormal; easing.type: Easing.OutCubic } }
