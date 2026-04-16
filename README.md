@@ -47,8 +47,7 @@ An image/video/Wallpaper Engine wallpaper selector from my shell [Skwd](https://
 - **Keybinds**: A lot of features in Skwd-wall is navigatable by keybinds, available for reference under the keybind configuration tab.
 
 ## What isn't cool about it yet?
-- **Subdirectories**: Currently working on subdirectory support.
-- **COPR/AUR/Nix Flake**: Looking into creating packages for easy installation and updates.
+- **Different wallpapers on different monitors**: Looking into the best design to set different wallpapers on different monitors.
 - **Keybind customization**: Investigating being able to customise keybinds freely to suit your preferences.
 
 ## The long story - Personal motivation and development practices
@@ -58,14 +57,11 @@ I develop it because I feel most wallpaper selectors are very boring traditional
 Note that **I use AI tooling** in my development just like I do in my professional life, however most of the code is mine including the stupid decisions.
 
 ## Performance
-Performance has been a large consideration making this (a bit harder to flick through four thousand wallpapers smoothly in 10 seconds than one might think!), and the application is in two parts - the daemon and the GUI.
-However this is not designed to be the leanest wallpaper selector out there and uses aggressive caching of data to support the smooth operations.
+Performance is a big consideration for Skwd.
 
-In testing the daemon consumes about 100 MB (PSS) and deals with things like background image & video optimisation (if enabled) and updating and caching the database with new wallpapers as they get added from the supported sources.
-
-The GUI on the other hand sits at about 175 MB (PSS) for about a 1000 wallpapers, but scaling with roughly 60 KB / wall. This is a deliberate design decision to cache as much data as possible to enable smooth retrieval of objects with any arbitrary search and quick.
-
-The wallpaper applications are spawned detached meaning you can completely kill the daemon with no ill effect outside of the cold start taking a bit longer as new wallpapers are processed on start by the daemon as it detects them.
+The daemon takes a tiny 10 MB of RAM and is the only permanent thing taking memory on your system.
+As Skwd-wall shuts down entirely between uses it has zero footprint when not in use, and while in use it takes between 150 to 300 MB of RAM depending on the size of your wallpaper collection.
+This RAM is freed you close Skwd-wall again.
 
 ## Dependencies
 ### Required
@@ -115,62 +111,43 @@ Then bind a key to toggle the selector via IPC:
 
 ```
 # Niri
-Mod+T hotkey-overlay-title="Skwd-wall" { spawn "quickshell ipc -p ~/skwd-wall/daemon.qml call wallpaper toggle"; }
+Mod+T hotkey-overlay-title="Skwd-wall" { spawn "skwd wall toggle"; }
 
 # Hyprland
-bind = SUPER+T, exec, quickshell ipc -p ~/skwd-wall/daemon.qml call wallpaper toggle
+bind = SUPER+T, exec, skwd wall toggle
 
 # KDE Plasma - Use the shortcut app
-quickshell ipc -p ~/skwd-wall/daemon.qml call wallpaper toggle
+skwd wall toggle
 ```
 
 Research how to do this in your specific compositor, I'm sure it supports keybinds and executing on launch.
 
-## KDE Plasma - If you're a KDE user start here before proceeding
-
-Skwd-wall auto-detects KDE Plasma and uses native Plasma APIs instead of awww/mpvpaper (as KDE Plasma doesn't play nice like that).
-
-**Static wallpapers** work out of the box via `plasma-apply-wallpaperimage` - no extra setup needed.
-
-**Video wallpapers** require the [Smart Video Wallpaper Reborn](https://github.com/luisbocanegra/plasma-smart-video-wallpaper-reborn) Plasma plugin. Without it, video wallpapers will not work on KDE.
-
-### Installing the video wallpaper plugin
-
-**KDE Store (any distro):**
-
-Install via the KDE Store: right click Desktop > Desktop and Wallpaper > Get New Plugins > search "Smart Video Wallpaper Reborn" (or just select it, should be in the top)
-
-After installing, Skwd-wall will automatically use the plugin for video wallpapers. No configuration required.
-
-**Arch Linux:**
-```sh
-yay -S plasma6-wallpapers-smart-video-wallpaper-reborn
-```
-
-**Fedora:**
-```sh
-sudo dnf install plasma-smart-video-wallpaper-reborn
-```
-
 ### Arch Linux
 
-```
-sudo pacman -S curl sqlite ffmpeg imagemagick inotify-tools ttf-nerd-fonts-symbols qt6-multimedia ttf-roboto ttf-roboto-mono
-yay -S quickshell-git awww-bin matugen-bin ttf-material-design-icons-desktop-git
+Install skwd-wall from the AUR (pulls in all dependencies automatically including skwd-daemon):
 
-Optional: `sudo pacman -S jq ollama &&`yay -S mpvpaper steamcmd linux-wallpaperengine-git`
-
-git clone https://github.com/liixini/skwd-wall && cd skwd-wall
-
-# the -p part is for PATH, extend to match the path where you find daemon.qml
-# set this up with your exec once of choice, such as a .desktop file, in your compositor etc.
-quickshell -p daemon.qml
-
-# this is the part you keybind somehow which launches the UI!
-quickshell ipc -p daemon.qml call wallpaper toggle
+```sh
+yay -S skwd-wall
 ```
 
-Note that yay is an AUR (Arch User Repository) helper, so if you don't have that you will need to install it or alternatively another helper you prefer.
+Optional:
+```sh
+yay -S ollama steamcmd linux-wallpaperengine
+```
+
+The daemon auto-enables on your next login. To start it immediately without logging out:
+```sh
+systemctl --user enable --now skwd-daemon.service
+```
+
+Launch the wallpaper selector:
+```sh
+skwd wall toggle
+```
+
+Bind this command to a key in your compositor for quick access.
+
+> **Note:** `yay` is an AUR helper. If you don't have it, install it or use another helper like `paru`.
 
 ### NixOS
 
@@ -320,18 +297,21 @@ Enable the COPR repos:
 ```sh
 sudo dnf copr enable errornointernet/quickshell
 sudo dnf copr enable scottames/awww
-sudo dnf copr enable liixini/skwd
+sudo dnf copr enable piixini/skwd
 ```
 
-Install skwd-wall (pulls in all dependencies automatically):
+Install skwd-wall (pulls in all dependencies automatically, including mpvpaper and ollama as recommended):
 
 ```sh
 sudo dnf install skwd-wall
 ```
 
+> **Note:** Ollama is installed as a recommended dependency for automated wallpaper tagging.
+> To skip recommended packages: `sudo dnf install --setopt=install_weak_deps=False skwd-wall`
+
 Optional:
 ```sh
-sudo dnf install jq ollama mpvpaper
+sudo dnf install jq
 ```
 
 The daemon auto-enables on your next login. To start it immediately without logging out:
@@ -347,6 +327,31 @@ skwd wall toggle
 
 Bind this command to a key in your compositor for quick access.
 
+### KDE Plasma is a bit different
+
+Skwd-wall auto-detects KDE Plasma and uses native Plasma APIs instead of awww/mpvpaper (as KDE Plasma doesn't play nice like that).
+
+**Static wallpapers** work out of the box via `plasma-apply-wallpaperimage` - no extra setup needed.
+
+**Video wallpapers** require the [Smart Video Wallpaper Reborn](https://github.com/luisbocanegra/plasma-smart-video-wallpaper-reborn) Plasma plugin. Without it, video wallpapers will not work on KDE.
+
+### Installing the video wallpaper plugin
+
+**KDE Store (any distro):**
+
+Install via the KDE Store: right click Desktop > Desktop and Wallpaper > Get New Plugins > search "Smart Video Wallpaper Reborn" (or just select it, should be in the top)
+
+After installing, Skwd-wall will automatically use the plugin for video wallpapers. No configuration required.
+
+**Arch Linux:**
+```sh
+yay -S plasma6-wallpapers-smart-video-wallpaper-reborn
+```
+
+**Fedora:**
+```sh
+sudo dnf install plasma-smart-video-wallpaper-reborn
+```
 
 
 ## Acknowledgements

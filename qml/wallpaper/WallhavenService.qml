@@ -25,6 +25,8 @@ QtObject {
   property string errorText: ""
   property bool hasMore: currentPage < lastPage
 
+  readonly property string _userAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+
   property var downloadStatus: ({})
   property var downloadProgress: ({})
   property var localWallhavenIds: ({})
@@ -128,7 +130,7 @@ QtObject {
     var tmpDest = dest + ".tmp"
     var comp = Qt.createComponent("WallhavenDownloadProc.qml")
     var proc = comp.createObject(whService, { whId: whId, dest: dest, tmpDest: tmpDest })
-    proc.command = ["curl", "-#", "-fSL", "-o", tmpDest, url]
+    proc.command = ["curl", "-#", "-fSL", "-A", whService._userAgent, "-o", tmpDest, url]
     proc.onProgressUpdate.connect(function(id, pct) {
       var p = Object.assign({}, downloadProgress)
       p[id] = pct
@@ -188,7 +190,7 @@ QtObject {
   property string _searchOutput: ""
 
   property var _searchProcess: Process {
-    command: ["curl", "-fsSL", whService._buildUrl()]
+    command: ["curl", "-fsSL", "-A", whService._userAgent, whService._buildUrl()]
     stdout: SplitParser {
       splitMarker: ""
       onRead: data => { whService._searchOutput += data }
