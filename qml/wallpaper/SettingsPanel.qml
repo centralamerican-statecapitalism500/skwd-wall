@@ -533,7 +533,7 @@ Item {
 
         SettingsToggle {
           colors: settingsPanel.colors
-          label: "Ollama (Local LLM colour & tagging)"
+          label: "Ollama (Automated tagging)"
           checked: Config.ollamaEnabled
           onToggle: function(v) { settingsPanel._saveConfigKey("features.ollama", v) }
         }
@@ -582,6 +582,13 @@ Item {
           label: "Reopen at last selection"
           checked: Config.reopenAtLastSelection
           onToggle: function(v) { settingsPanel._saveConfigKey("general.reopenAtLastSelection", v) }
+        }
+
+        SettingsToggle {
+          colors: settingsPanel.colors
+          label: "Video auto scale"
+          checked: Config.videoAutoScale
+          onToggle: function(v) { settingsPanel._saveConfigKey("features.videoAutoScale", v) }
         }
 
       }
