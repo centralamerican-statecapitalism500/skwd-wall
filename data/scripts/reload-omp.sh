@@ -9,6 +9,25 @@ command -v jq >/dev/null || exit 0
 
 mkdir -p "$(dirname "$OUTPUT")"
 
+# temp workaround until I take time to investigate how to theme OMP
+ENV_OUT="$CACHE/colors.env"
+jq -r '
+  "export SKWD_PRIMARY=\"\(.primary)\"",
+  "export SKWD_ON_PRIMARY=\"\(.primaryText)\"",
+  "export SKWD_PRIMARY_CONTAINER=\"\(.primaryContainer)\"",
+  "export SKWD_ON_PRIMARY_CONTAINER=\"\(.primaryContainerText)\"",
+  "export SKWD_TERTIARY=\"\(.tertiary)\"",
+  "export SKWD_ON_TERTIARY=\"\(.tertiaryText)\"",
+  "export SKWD_TERTIARY_CONTAINER=\"\(.tertiaryContainer)\"",
+  "export SKWD_ON_TERTIARY_CONTAINER=\"\(.tertiaryContainerText)\"",
+  "export SKWD_SURFACE=\"\(.surface)\"",
+  "export SKWD_SURFACE_VARIANT=\"\(.surfaceVariant)\"",
+  "export SKWD_ON_SURFACE_VARIANT=\"\(.surfaceVariantText)\"",
+  "export SKWD_ERROR=\"\(.error)\"",
+  "export SKWD_ON_ERROR=\"\(.errorText)\"",
+  "export SKWD_OUTLINE=\"\(.outline)\""
+' "$COLORS" > "$ENV_OUT"
+
 jq '{
   "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
   "version": 3,
@@ -34,22 +53,22 @@ jq '{
     {
       "type": "prompt", "alignment": "left",
       "segments": [
-        {"type":"time","style":"powerline","powerline_symbol":"\ue0b8","foreground":"p:on-primary","background":"p:primary","template":" {{ .CurrentDate | date \"15:04\" }} "},
-        {"type":"path","style":"powerline","powerline_symbol":"\ue0b8","foreground":"p:on-tertiary","background":"p:tertiary","template":" \uf413 {{ .Path }} ","properties":{"style":"agnoster_short","max_depth":3}},
-        {"type":"git","style":"powerline","powerline_symbol":"\ue0b8","foreground":"p:on-primary","background":"p:primary","template":" \ue0a0 {{ .HEAD }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }} ","properties":{"branch_icon":"","fetch_status":true,"fetch_stash_count":true}},
-        {"type":"status","style":"powerline","powerline_symbol":"\ue0b8","foreground":"p:on-error","background":"p:error","template":" \uf00d {{ .Code }} "}
+        {"type":"time","style":"powerline","powerline_symbol":"\ue0b8","foreground":"p:on-primary","background":"p:primary","foreground_templates":["{{ .Env.SKWD_ON_PRIMARY }}"],"background_templates":["{{ .Env.SKWD_PRIMARY }}"],"template":" {{ .CurrentDate | date \"15:04\" }} "},
+        {"type":"path","style":"powerline","powerline_symbol":"\ue0b8","foreground":"p:on-tertiary","background":"p:tertiary","foreground_templates":["{{ .Env.SKWD_ON_TERTIARY }}"],"background_templates":["{{ .Env.SKWD_TERTIARY }}"],"template":" \uf413 {{ .Path }} ","properties":{"style":"agnoster_short","max_depth":3}},
+        {"type":"git","style":"powerline","powerline_symbol":"\ue0b8","foreground":"p:on-primary","background":"p:primary","foreground_templates":["{{ .Env.SKWD_ON_PRIMARY }}"],"background_templates":["{{ .Env.SKWD_PRIMARY }}"],"template":" \ue0a0 {{ .HEAD }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }} ","properties":{"branch_icon":"","fetch_status":true,"fetch_stash_count":true}},
+        {"type":"status","style":"powerline","powerline_symbol":"\ue0b8","foreground":"p:on-error","background":"p:error","foreground_templates":["{{ .Env.SKWD_ON_ERROR }}"],"background_templates":["{{ .Env.SKWD_ERROR }}"],"template":" \uf00d {{ .Code }} "}
       ]
     },
     {
       "type": "prompt", "alignment": "right", "overflow": "hide",
       "segments": [
-        {"type":"executiontime","style":"powerline","powerline_symbol":"\ue0ba","invert_powerline":true,"foreground":"p:on-surface-variant","background":"p:surface-variant","template":" \uf252 {{ .FormattedMs }} ","properties":{"threshold":2000,"style":"roundrock"}}
+        {"type":"executiontime","style":"powerline","powerline_symbol":"\ue0ba","invert_powerline":true,"foreground":"p:on-surface-variant","background":"p:surface-variant","foreground_templates":["{{ .Env.SKWD_ON_SURFACE_VARIANT }}"],"background_templates":["{{ .Env.SKWD_SURFACE_VARIANT }}"],"template":" \uf252 {{ .FormattedMs }} ","properties":{"threshold":2000,"style":"roundrock"}}
       ]
     },
     {
       "type": "prompt", "alignment": "left", "newline": true,
       "segments": [
-        {"type":"text","style":"plain","foreground":"p:primary","template":"❯ "}
+        {"type":"text","style":"plain","foreground":"p:primary","foreground_templates":["{{ .Env.SKWD_PRIMARY }}"],"template":"❯ "}
       ]
     }
   ]
