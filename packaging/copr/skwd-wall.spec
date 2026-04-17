@@ -7,7 +7,7 @@ Summary:        Quickshell-based wallpaper selector with color sorting and Matug
 
 License:        MIT
 URL:            https://github.com/liixini/skwd-wall
-Source0:        %{url}/archive/refs/heads/experimental/rust-refactor.tar.gz#/%{name}-rust-refactor.tar.gz
+Source0:        %{url}/archive/refs/heads/main.tar.gz#/%{name}-main.tar.gz
 
 BuildArch:      noarch
 

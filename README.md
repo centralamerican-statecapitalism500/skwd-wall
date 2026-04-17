@@ -148,7 +148,7 @@ Add the flake input to your `flake.nix`:
 ```nix
 {
   inputs = {
-    skwd-wall.url = "github:liixini/skwd-wall/experimental/rust-refactor";
+    skwd-wall.url = "github:liixini/skwd-wall";
   };
 }
 ```
