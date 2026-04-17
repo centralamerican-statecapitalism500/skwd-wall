@@ -347,59 +347,6 @@ Item {
         }
     }
 
-    Row {
-        id: colorDotsRow
-        z: 10
-        anchors.verticalCenter: typeBadge.verticalCenter
-        opacity: typeBadge.opacity
-        spacing: 4
-        visible: Config.wallpaperColorDots && wallpaperColors !== undefined
-        property var wallpaperColors: {
-            if (!delegateItem.service) return undefined
-            var key = delegateItem.model.weId ? delegateItem.model.weId : ImageService.thumbKey(delegateItem.model.thumb, delegateItem.model.name)
-            if (!key) return undefined
-            return delegateItem.service.matugenDb[key]
-        }
-
-        states: [
-            State {
-                name: "right"
-                when: typeBadge.onRight
-                AnchorChanges {
-                    target: colorDotsRow
-                    anchors.right: typeBadge.left
-                    anchors.left: undefined
-                }
-                PropertyChanges {
-                    target: colorDotsRow
-                    anchors.rightMargin: 6
-                }
-            },
-            State {
-                name: "left"
-                when: !typeBadge.onRight
-                AnchorChanges {
-                    target: colorDotsRow
-                    anchors.left: typeBadge.right
-                    anchors.right: undefined
-                }
-                PropertyChanges {
-                    target: colorDotsRow
-                    anchors.leftMargin: 6
-                }
-            }
-        ]
-
-        Repeater {
-            model: ["primary", "tertiary", "secondary"]
-            Rectangle {
-                width: 10; height: 10; radius: 5
-                color: colorDotsRow.wallpaperColors ? (colorDotsRow.wallpaperColors[modelData] ?? "#888") : "#888"
-                border.width: 1; border.color: Qt.rgba(0, 0, 0, 0.5)
-            }
-        }
-    }
-
     }
 
     Item {

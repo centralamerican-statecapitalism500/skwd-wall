@@ -15,9 +15,6 @@ Item {
     property bool cacheLoading: false
     property int cacheProgress: 0
     property int cacheTotal: 0
-    property bool matugenRunning: false
-    property int matugenProgress: 0
-    property int matugenTotal: 0
     property int ollamaProgress: 0
     property int ollamaTotal: 0
     property string ollamaEta: ""
@@ -38,6 +35,7 @@ Item {
     signal wallhavenToggled()
     signal steamWorkshopToggled()
     signal tagCloudToggled()
+    signal modeToggled(string mode)
 
     readonly property int _skew: 10
     property real maxWidth: 99999
@@ -112,6 +110,14 @@ Item {
                     filterBar.service.updateFilteredModel()
                 }
             }
+        }
+
+        FilterButton {
+            colors: filterBar.colors
+            icon: "\u{f02d1}"
+            tooltip: "Favourites"
+            isActive: filterBar.service ? filterBar.service.favouriteFilterActive : false
+            onClicked: filterBar.service.favouriteFilterActive = !filterBar.service.favouriteFilterActive
         }
 
         FilterButton {
@@ -194,10 +200,18 @@ Item {
 
         FilterButton {
             colors: filterBar.colors
-            icon: "󰋑"
-            tooltip: "Favourites"
-            isActive: filterBar.service ? filterBar.service.favouriteFilterActive : false
-            onClicked: filterBar.service.favouriteFilterActive = !filterBar.service.favouriteFilterActive
+            icon: "\u{f0599}"
+            tooltip: "Light mode"
+            isActive: Config.matugenMode === "light"
+            onClicked: filterBar.modeToggled("light")
+        }
+
+        FilterButton {
+            colors: filterBar.colors
+            icon: "\u{f0594}"
+            tooltip: "Dark mode"
+            isActive: Config.matugenMode === "dark"
+            onClicked: filterBar.modeToggled("dark")
         }
 
         FilterButton {
@@ -244,6 +258,7 @@ Item {
                 property color strokeColor: filterBar.colors ? Qt.rgba(filterBar.colors.primary.r, filterBar.colors.primary.g, filterBar.colors.primary.b, 0.15) : Qt.rgba(1, 1, 1, 0.08)
                 onFillColorChanged: requestPaint()
                 onStrokeColorChanged: requestPaint()
+                onWidthChanged: requestPaint()
                 onPaint: {
                     var ctx = getContext("2d")
                     ctx.clearRect(0, 0, width, height)
@@ -280,7 +295,7 @@ Item {
         }
 
         Item {
-            visible: filterBar.cacheLoading || filterBar.ollamaActive || filterBar.ollamaLogLine !== "" || filterBar.matugenRunning || filterBar.videoConvertRunning || filterBar.imageOptimizeRunning
+            visible: filterBar.cacheLoading || filterBar.ollamaActive || filterBar.ollamaLogLine !== "" || filterBar.videoConvertRunning || filterBar.imageOptimizeRunning
             width: visible ? (_statusRow.width + 24 + filterBar._skew) : 0
             height: 24
 
@@ -324,7 +339,7 @@ Item {
                     RotationAnimation on rotation {
                         from: 0; to: 360; duration: 1200
                         loops: Animation.Infinite
-                        running: filterBar.cacheLoading || filterBar.ollamaActive || filterBar.matugenRunning || filterBar.videoConvertRunning || filterBar.imageOptimizeRunning || filterBar.ollamaLogLine !== ""
+                        running: filterBar.cacheLoading || filterBar.ollamaActive || filterBar.videoConvertRunning || filterBar.imageOptimizeRunning || filterBar.ollamaLogLine !== ""
                     }
                 }
 
@@ -346,12 +361,6 @@ Item {
                                 parts.push("OLLAMA")
                         } else if (filterBar.ollamaLogLine !== "") {
                             parts.push("OLLAMA")
-                        }
-                        if (filterBar.matugenRunning) {
-                            if (filterBar.matugenTotal > 0)
-                                parts.push("MATUGEN " + filterBar.matugenProgress + "/" + filterBar.matugenTotal)
-                            else
-                                parts.push("MATUGEN")
                         }
                         if (filterBar.videoConvertRunning) {
                             if (filterBar.videoConvertTotal > 0)

@@ -38,7 +38,6 @@ QtObject {
 
   property var tagsDb: ({})
   property var colorsDb: ({})
-  property var matugenDb: ({})
   property var weatherDb: ({})
   property var favouritesDb: ({})
   property bool favouriteFilterActive: false
@@ -54,7 +53,7 @@ QtObject {
       var walls = result.wallpapers || []
       console.log("[WSS] listWallpapers returned " + walls.length + " items")
       var items = []
-      var newTags = {}, newColors = {}, newMatugen = {}, newFavs = {}, newWeather = {}
+      var newTags = {}, newColors = {}, newFavs = {}, newWeather = {}
 
       for (var i = 0; i < walls.length; i++) {
         var r = walls[i]
@@ -76,7 +75,6 @@ QtObject {
 
         if (r.tags) try { newTags[key] = JSON.parse(r.tags) } catch(e) {}
         if (r.colors) try { newColors[key] = JSON.parse(r.colors) } catch(e) {}
-        if (r.matugen) try { newMatugen[key] = JSON.parse(r.matugen) } catch(e) {}
         if (r.weather) try { newWeather[key] = JSON.parse(r.weather) } catch(e) {}
         if (r.favourite === 1) newFavs[key] = true
       }
@@ -91,7 +89,6 @@ QtObject {
       _wallpaperDataKeys = keys
       tagsDb = newTags
       colorsDb = newColors
-      matugenDb = newMatugen
       weatherDb = newWeather
       if (!_favouritesLoaded) {
         favouritesDb = newFavs
@@ -104,9 +101,6 @@ QtObject {
       FileMetadataService.loadFromDaemonData(walls)
       _rebuildPopularTags()
       updateFilteredModel()
-
-      if (Config.matugenEnabled)
-        MatugenCacheService.rebuildWithCache(matugenDb)
     })
   }
 

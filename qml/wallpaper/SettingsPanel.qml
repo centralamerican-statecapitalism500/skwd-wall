@@ -20,6 +20,8 @@ Item {
   property string _lastConvertResult: ""
   property string _lastOptimizeResult: ""
 
+  signal themeChanged(string scheme, string mode)
+
   property var _ollamaFetchProc: Process {
     onExited: function(code) {
       settingsPanel._ollamaModelsFetching = false
@@ -238,7 +240,8 @@ Item {
           { key: "paths",     label: "PATHS" },
           { key: "performance", label: "PERFORMANCE" },
           { key: "postprocessing", label: "POSTPROCESSING" },
-          { key: "keybinds",  label: "KEYBINDS" }
+          { key: "keybinds",  label: "KEYBINDS" },
+          { key: "theme",     label: "THEME" }
         ]
         if (Config.wallhavenEnabled) tabs.push({ key: "wallhaven", label: "WALLHAVEN" })
         if (Config.steamEnabled) tabs.push({ key: "steam", label: "STEAM" })
@@ -274,6 +277,7 @@ Item {
       if (settingsPanel.activeTab === "steam") return steamContent.implicitHeight
       if (settingsPanel.activeTab === "performance") return performanceContent.implicitHeight
       if (settingsPanel.activeTab === "postprocessing") return Math.min(_postprocessingInner.implicitHeight, 360)
+      if (settingsPanel.activeTab === "theme") return _themeInner.implicitHeight
       if (settingsPanel.activeTab === "matugen") return Math.min(_matugenInner.implicitHeight, 360)
       if (settingsPanel.activeTab === "keybinds") return keybindsContent.implicitHeight
       return 0
@@ -530,13 +534,6 @@ Item {
           label: "Mute wallpaper audio"
           checked: Config.wallpaperMute
           onToggle: function(v) { settingsPanel._saveConfigKey("wallpaperMute", v) }
-        }
-
-        SettingsToggle {
-          colors: settingsPanel.colors
-          label: "Show colour dots"
-          checked: Config.wallpaperColorDots
-          onToggle: function(v) { settingsPanel._saveConfigKey("components.wallpaperSelector.showColorDots", v) }
         }
       }
 
@@ -1450,6 +1447,56 @@ Item {
         ? postprocessingContent.contentY / (_cH - _vH) * (_vH - height)
         : 0)
       Behavior on height { NumberAnimation { duration: 150 } }
+    }
+
+    Flickable {
+      id: themeContent
+      anchors.left: parent.left
+      anchors.right: parent.right
+      height: parent.height
+      visible: settingsPanel.activeTab === "theme"
+      contentHeight: _themeInner.implicitHeight
+      clip: true
+      flickableDirection: Flickable.VerticalFlick
+      boundsBehavior: Flickable.StopAtBounds
+
+      ScrollBar.vertical: ScrollBar {
+        policy: ScrollBar.AlwaysOff
+      }
+
+      Column {
+        id: _themeInner
+        width: parent.width
+        spacing: 8
+
+        Text {
+          text: "SCHEME TYPE"
+          font.family: Style.fontFamily; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 1
+          color: settingsPanel.colors ? settingsPanel.colors.tertiary : Qt.rgba(1, 1, 1, 0.5)
+        }
+
+        SettingsCombo {
+          colors: settingsPanel.colors
+          label: ""
+          value: Config.matugenScheme.replace("scheme-", "")
+          model: ["content", "expressive", "fidelity", "fruit-salad", "monochrome", "neutral", "rainbow", "tonal-spot", "vibrant"]
+          onSelect: function(v) { var full = "scheme-" + v; settingsPanel._saveConfigKey("matugen.schemeType", full); settingsPanel.themeChanged(full, Config.matugenMode) }
+        }
+
+        Text {
+          text: "MODE"
+          font.family: Style.fontFamily; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 1
+          color: settingsPanel.colors ? settingsPanel.colors.tertiary : Qt.rgba(1, 1, 1, 0.5)
+        }
+
+        SettingsCombo {
+          colors: settingsPanel.colors
+          label: ""
+          value: Config.matugenMode
+          model: ["dark", "light"]
+          onSelect: function(v) { settingsPanel._saveConfigKey("matugen.mode", v); settingsPanel.themeChanged(Config.matugenScheme, v) }
+        }
+      }
     }
 
     Flickable {

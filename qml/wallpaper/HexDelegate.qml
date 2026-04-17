@@ -232,32 +232,6 @@ Item {
         }
     }
 
-    Row {
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: parent.top
-        anchors.topMargin: hexItem._r * 0.18
-        spacing: 4
-        z: 5
-        visible: Config.wallpaperColorDots && _wpColors !== undefined
-
-        property var _wpColors: {
-            if (!hexItem.service) return undefined
-            if (!hexItem.itemData) return undefined
-            var key = hexItem.itemData.weId ? hexItem.itemData.weId : ImageService.thumbKey(hexItem.itemData.thumb, hexItem.itemData.name)
-            if (!key) return undefined
-            return hexItem.service.matugenDb[key]
-        }
-
-        Repeater {
-            model: ["primary", "tertiary", "secondary"]
-            Rectangle {
-                width: 10; height: 10; radius: 5
-                color: parent.parent._wpColors ? (parent.parent._wpColors[modelData] ?? "#888") : "#888"
-                border.width: 1; border.color: Qt.rgba(0, 0, 0, 0.5)
-            }
-        }
-    }
-
     Rectangle {
         x: hexItem._cx + hexItem._r * hexItem._sin30 - width - 4
         y: hexItem._cy - hexItem._r * hexItem._cos30 + 8

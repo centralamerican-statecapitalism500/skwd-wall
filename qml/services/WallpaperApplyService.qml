@@ -15,7 +15,8 @@ QtObject {
     readonly property string mainMonitor: Config.mainMonitor
     readonly property string ollamaUrl: Config.ollamaUrl
     readonly property string ollamaModel: Config.ollamaModel
-    property string matugenScheme: "scheme-fidelity"
+    property string matugenScheme: Config.matugenScheme
+    property string matugenMode: Config.matugenMode
     property bool wallpaperMute: true
     readonly property string _matugenConfig: cacheDir + "/matugen-config.toml"
     property bool _stateFileLoaded: false
@@ -30,9 +31,6 @@ QtObject {
 
     Component.onCompleted: {
         var data = Config._data
-        if (data.matugen) {
-            if (data.matugen.schemeType) matugenScheme = data.matugen.schemeType
-        }
         if (data.wallpaperMute !== undefined) wallpaperMute = data.wallpaperMute
     }
 
@@ -375,6 +373,7 @@ QtObject {
         var hashFiles = outputs.map(function(f) { return JSON.stringify(f) }).join(" ")
         var before = hashFiles ? "_BEFORE=$(md5sum " + hashFiles + " 2>/dev/null | sort); " : ""
         var imgArg = " image -t " + JSON.stringify(matugenScheme) +
+            " -m " + JSON.stringify(matugenMode) +
             " --source-color-index 0 " + JSON.stringify(imagePath)
         var defaultCfg = Config.defaultMatugenConfig
         var matugen = "command -v matugen >/dev/null && { " +

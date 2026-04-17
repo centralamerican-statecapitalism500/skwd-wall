@@ -31,6 +31,26 @@ QtObject {
         catch (e) { return {} }
     }
 
+    function saveKey(path, value) {
+        _configWriter.reload()
+        var data
+        try { data = JSON.parse(_configWriter.text()) } catch(e) { data = {} }
+        var parts = path.split(".")
+        var obj = data
+        for (var i = 0; i < parts.length - 1; i++) {
+            if (typeof obj[parts[i]] !== "object" || obj[parts[i]] === null)
+                obj[parts[i]] = {}
+            obj = obj[parts[i]]
+        }
+        obj[parts[parts.length - 1]] = value
+        _configWriter.setText(JSON.stringify(data, null, 2) + "\n")
+    }
+
+    property var _configWriter: FileView {
+        path: Config.configDir + "/config.json"
+        preload: true
+    }
+
     readonly property string runtimeDir: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/skwd-wall"
 
     readonly property string scriptsDir: _resolve(_data.paths?.scripts) || (installDir + "/scripts")
@@ -87,6 +107,8 @@ QtObject {
 
     readonly property string matugenConfig: cacheDir + "/matugen-config.toml"
     readonly property string defaultMatugenConfig: _resolve(_data.defaultMatugenConfig ?? "~/.config/matugen/config.toml")
+    readonly property string matugenScheme: (_data.matugen && _data.matugen.schemeType) ? _data.matugen.schemeType : "scheme-fidelity"
+    readonly property string matugenMode: (_data.matugen && _data.matugen.mode) ? _data.matugen.mode : "dark"
 
     readonly property var integrations: _data.integrations ?? []
     onIntegrationsChanged: _generateMatugenConfig()
@@ -131,7 +153,6 @@ QtObject {
     readonly property int _screenH: _screen ? _screen.height : 1080
     readonly property bool _isSmallScreen: _screenW <= 1600
 
-    readonly property bool wallpaperColorDots: _wallpaperSelector.showColorDots !== false
     readonly property int wallpaperSliceHeight: _wallpaperSelector.sliceHeight ?? (_isSmallScreen ? 360 : 520)
     readonly property int wallpaperVisibleCount: _wallpaperSelector.visibleCount ?? (_isSmallScreen ? 8 : 12)
     readonly property int wallpaperExpandedWidth: _wallpaperSelector.expandedWidth ?? (_isSmallScreen ? 600 : 924)

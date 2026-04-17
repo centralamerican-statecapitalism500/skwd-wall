@@ -60,6 +60,7 @@ QtObject {
         call("wall.apply", {type: "we", we_id: weId, screens: screens || []}, callback)
     }
     function restore(callback) { call("wall.restore", {}, callback) }
+    function retheme(scheme, mode, callback) { call("wall.retheme", {scheme: scheme || "", mode: mode || ""}, callback) }
 
     function rebuildCache(callback)    { call("wall.cache_rebuild", {}, callback) }
     function clearData(callback)       { call("wall.clear_data", {}, callback) }
@@ -85,12 +86,6 @@ QtObject {
         var params = {name: name, type: type || "static"}
         if (weId) params.we_id = weId
         call("wall.delete", params, callback)
-    }
-    function setMatugen(key, matugenJson, callback) {
-        call("wall.set_matugen", {key: key, matugen: matugenJson}, callback)
-    }
-    function setMatugenBatch(entries, callback) {
-        call("wall.set_matugen_batch", {entries: entries}, callback)
     }
 
     function updateMetadata(key, filesize, width, height) {

@@ -36,7 +36,8 @@
         "apiKey": ""
     },
     "matugen": {
-        "schemeType": "scheme-fidelity"
+        "schemeType": "scheme-fidelity",
+        "mode": "dark"
     },
     "integrations": [
         {
@@ -114,7 +115,6 @@
     "components": {
         "wallpaperSelector": {
             "displayMode": "slices",
-            "showColorDots": false,
             "sliceSpacing": -30,
             "hexScrollStep": 1,
             "customPresets": {}

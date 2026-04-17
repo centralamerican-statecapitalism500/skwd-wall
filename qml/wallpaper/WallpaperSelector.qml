@@ -98,6 +98,12 @@ Scope {
               wallpaperSelector.lastHexCol = pos.hexCol ?? -1
               wallpaperSelector.lastHexRow = pos.hexRow ?? 0
               wallpaperSelector.lastGridIndex = pos.gridIndex ?? 0
+              if (pos.colorFilter !== undefined) service.selectedColorFilter = pos.colorFilter
+              if (pos.typeFilter !== undefined) service.selectedTypeFilter = pos.typeFilter
+              if (pos.sortMode !== undefined) service.sortMode = pos.sortMode
+              if (pos.tags !== undefined) service.selectedTags = pos.tags
+              if (pos.weatherFilter !== undefined) service.weatherFilterActive = pos.weatherFilter
+              if (pos.favouriteFilter !== undefined) service.favouriteFilterActive = pos.favouriteFilter
             } catch(e) {}
           }
           _bindActiveViewModel()
@@ -121,7 +127,13 @@ Scope {
           sliceIndex: lastIndex,
           hexCol: lastHexCol,
           hexRow: lastHexRow,
-          gridIndex: lastGridIndex
+          gridIndex: lastGridIndex,
+          colorFilter: service.selectedColorFilter,
+          typeFilter: service.selectedTypeFilter,
+          sortMode: service.sortMode,
+          tags: service.selectedTags,
+          weatherFilter: service.weatherFilterActive,
+          favouriteFilter: service.favouriteFilterActive
         }))
       }
       cardVisible = false
@@ -414,9 +426,6 @@ Scope {
       cacheLoading: service.cacheLoading
       cacheProgress: service.cacheProgress
       cacheTotal: service.cacheTotal
-      matugenRunning: MatugenCacheService.running
-      matugenProgress: MatugenCacheService.progress
-      matugenTotal: MatugenCacheService.total
       ollamaProgress: service.ollamaTaggedCount
       ollamaTotal: service.ollamaTotalThumbs
       ollamaEta: service.ollamaEta
@@ -440,6 +449,10 @@ Scope {
         wallpaperSelector.tagCloudVisible = !wallpaperSelector.tagCloudVisible
         if (!wallpaperSelector.tagCloudVisible)
           wallpaperSelector._setSelectedTags([])
+      }
+      onModeToggled: function(mode) {
+        Config.saveKey("matugen.mode", mode)
+        DaemonClient.retheme(Config.matugenScheme, mode)
       }
       visible: !wallpaperSelector.anyBrowserOpen
       opacity: wallpaperSelector.anyBrowserOpen ? 0 : 1
@@ -472,6 +485,7 @@ Scope {
           service: wallpaperSelector.selectorService
           settingsOpen: wallpaperSelector.settingsOpen
           onCloseRequested: { wallpaperSelector.settingsOpen = false; wallpaperSelector._focusActiveList() }
+          onThemeChanged: function(scheme, mode) { DaemonClient.retheme(scheme, mode) }
         }
       }
     }
@@ -1035,7 +1049,7 @@ Scope {
         if (visible && !wallpaperSelector.tagCloudVisible) forceActiveFocus()
         if (visible && Config.reopenAtLastSelection && wallpaperSelector.lastGridIndex > 0) {
           hoveredIdx = Math.min(wallpaperSelector.lastGridIndex, count - 1)
-          positionViewAtIndex(hoveredIdx, GridView.Center)
+          positionViewAtIndex(hoveredIdx, GridView.Visible)
         }
       }
 
