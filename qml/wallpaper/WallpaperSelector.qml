@@ -28,6 +28,20 @@ Scope {
       service.updateFilteredModel()
   }
 
+  function _applyItem(item) {
+    if (Config.wallpaperPerMonitor) {
+      _monitorPicker.open(item)
+      return
+    }
+    _doApply(item, null)
+  }
+
+  function _doApply(item, outputs) {
+    if (item.type === "we") service.applyWE(item.weId)
+    else if (item.type === "video") service.applyVideo(item.path, outputs)
+    else service.applyStatic(item.path, outputs)
+  }
+
   function resetScroll() {
     wallpaperSelector.lastContentX = 0
     wallpaperSelector.lastIndex = 0
@@ -658,13 +672,7 @@ Scope {
       Keys.onReturnPressed: {
         if (currentIndex >= 0 && currentIndex < service.filteredModel.count) {
           const item = service.filteredModel.get(currentIndex)
-          if (item.type === "we") {
-            service.applyWE(item.weId)
-          } else if (item.type === "video") {
-            service.applyVideo(item.path)
-          } else {
-            service.applyStatic(item.path)
-          }
+          wallpaperSelector._applyItem(item)
         }
       }
       Keys.onPressed: function(event) {
@@ -857,9 +865,7 @@ Scope {
         var flatIdx = _selectedCol * _rows + _selectedRow
         if (flatIdx >= 0 && flatIdx < service.filteredModel.count) {
           var item = service.filteredModel.get(flatIdx)
-          if (item.type === "we") service.applyWE(item.weId)
-          else if (item.type === "video") service.applyVideo(item.path)
-          else service.applyStatic(item.path)
+          wallpaperSelector._applyItem(item)
         }
       }
 
@@ -1060,9 +1066,7 @@ Scope {
       Keys.onReturnPressed: {
         if (hoveredIdx >= 0 && hoveredIdx < service.filteredModel.count) {
           var item = service.filteredModel.get(hoveredIdx)
-          if (item.type === "we") service.applyWE(item.weId)
-          else if (item.type === "video") service.applyVideo(item.path)
-          else service.applyStatic(item.path)
+          wallpaperSelector._applyItem(item)
         }
       }
       property int hoveredIdx: currentIndex
@@ -1333,9 +1337,7 @@ Scope {
                 }, gpos.x, gpos.y, gridThumbDelegate)
               } else {
                 var d = gridThumbDelegate.model
-                if (d.type === "we") service.applyWE(d.weId)
-                else if (d.type === "video") service.applyVideo(d.path)
-                else service.applyStatic(d.path)
+                wallpaperSelector._applyItem(d)
               }
             }
           }
@@ -2377,6 +2379,16 @@ Scope {
 
       }
     }
+
+  MonitorPickerPopup {
+    id: _monitorPicker
+    anchors.fill: parent
+    z: 300
+    colors: wallpaperSelector.colors
+    onAccepted: function(item, outputs) {
+      wallpaperSelector._doApply(item, outputs)
+    }
+  }
 
   }
 }

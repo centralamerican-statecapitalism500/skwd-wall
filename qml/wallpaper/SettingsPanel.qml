@@ -445,6 +445,21 @@ Item {
         SettingsInput { visible: Config.displayMode === "slices"; colors: settingsPanel.colors; label: "Slice width"; value: Config.wallpaperSliceWidth; min: 50; max: 500; onCommit: function(n) { settingsPanel._saveField("sliceWidth", n) } }
         SettingsInput { visible: Config.displayMode === "slices"; colors: settingsPanel.colors; label: "Gap"; value: Config.wallpaperSliceSpacing; min: -500; max: 500; onCommit: function(n) { settingsPanel._saveField("sliceSpacing", n) } }
         SettingsInput { visible: Config.displayMode === "slices"; colors: settingsPanel.colors; label: "Skew"; value: Config.wallpaperSkewOffset; min: -500; max: 500; onCommit: function(n) { settingsPanel._saveField("skewOffset", n) } }
+
+        Item { width: 1; height: Config.displayMode === "slices" ? 4 : 0; visible: Config.displayMode === "slices" }
+
+        Text {
+          text: "APPLY"
+          font.family: Style.fontFamily; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 1.5
+          color: settingsPanel.colors ? settingsPanel.colors.tertiary : Qt.rgba(1, 1, 1, 0.5)
+        }
+
+        SettingsToggle {
+          colors: settingsPanel.colors
+          label: "WIP - Only images per monitor"
+          checked: Config.wallpaperPerMonitor
+          onToggle: function(v) { settingsPanel._saveConfigKey("general.wallpaperPerMonitor", v) }
+        }
       }
     }
 

@@ -50,11 +50,15 @@ QtObject {
     function show()   { call("wall.show", {}) }
     function hide()   { call("wall.hide", {}) }
 
-    function applyStatic(path, callback) {
-        call("wall.apply", {type: "static", path: path}, callback)
+    function applyStatic(path, outputs, callback) {
+        var params = {type: "static", path: path}
+        if (outputs && outputs.length > 0) params.outputs = outputs
+        call("wall.apply", params, callback)
     }
-    function applyVideo(path, callback) {
-        call("wall.apply", {type: "video", path: path}, callback)
+    function applyVideo(path, outputs, callback) {
+        var params = {type: "video", path: path}
+        if (outputs && outputs.length > 0) params.outputs = outputs
+        call("wall.apply", params, callback)
     }
     function applyWE(weId, screens, callback) {
         call("wall.apply", {type: "we", we_id: weId, screens: screens || []}, callback)

@@ -425,8 +425,8 @@ QtObject {
   }
   onSelectedTypeFilterChanged: updateFilteredModel()
 
-  function applyStatic(path) {
-    DaemonClient.applyStatic(path)
+  function applyStatic(path, outputs) {
+    DaemonClient.applyStatic(path, outputs)
     service.wallpaperApplied()
   }
 
@@ -435,8 +435,8 @@ QtObject {
     DaemonClient.applyWE(id, screens)
   }
 
-  function applyVideo(path) {
-    DaemonClient.applyVideo(path)
+  function applyVideo(path, outputs) {
+    DaemonClient.applyVideo(path, outputs)
   }
 
   function deleteWallpaperItem(type, name, weId) {
