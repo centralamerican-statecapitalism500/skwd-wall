@@ -90,7 +90,12 @@ QtObject {
     readonly property bool wallhavenEnabled: _data.features?.wallhaven !== false
     readonly property bool videoPreviewEnabled: _data.features?.videoPreview !== false
     readonly property bool videoAutoScale: _data.features?.videoAutoScale === true
-    readonly property bool wallpaperMute: _data.wallpaperMute === true
+    readonly property bool wallpaperMute: _data.wallpaperMute !== false
+    readonly property int wallpaperVolume: {
+        var v = _data.wallpaperVolume
+        if (typeof v !== "number") return 100
+        return Math.max(0, Math.min(100, Math.round(v)))
+    }
 
     readonly property string videoConvertPreset: _data.performance?.videoConvertPreset ?? "balanced"
     readonly property string videoConvertResolution: _data.performance?.videoConvertResolution ?? "2k"

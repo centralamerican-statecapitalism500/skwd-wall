@@ -17,7 +17,7 @@ QtObject {
     readonly property string ollamaModel: Config.ollamaModel
     property string matugenScheme: Config.matugenScheme
     property string matugenMode: Config.matugenMode
-    property bool wallpaperMute: true
+    readonly property bool wallpaperMute: Config.wallpaperMute
     readonly property string _matugenConfig: cacheDir + "/matugen-config.toml"
     property bool _stateFileLoaded: false
     property var _stateFile: FileView {
@@ -30,8 +30,6 @@ QtObject {
     }
 
     Component.onCompleted: {
-        var data = Config._data
-        if (data.wallpaperMute !== undefined) wallpaperMute = data.wallpaperMute
     }
 
     property bool _restoring: false

@@ -556,8 +556,31 @@ Item {
           colors: settingsPanel.colors
           label: "Mute wallpaper audio"
           checked: Config.wallpaperMute
-          onToggle: function(v) { settingsPanel._saveConfigKey("wallpaperMute", v) }
+          onToggle: function(v) {
+            settingsPanel._saveConfigKey("wallpaperMute", v)
+            _muteReloadTimer.restart()
+          }
         }
+
+        SettingsSlider {
+          colors: settingsPanel.colors
+          label: "Wallpaper volume"
+          value: Config.wallpaperVolume
+          min: 0
+          max: 100
+          enabled: !Config.wallpaperMute
+          onCommit: function(v) {
+            settingsPanel._saveConfigKey("wallpaperVolume", v)
+            _muteReloadTimer.restart()
+          }
+        }
+      }
+
+      Timer {
+        id: _muteReloadTimer
+        interval: 500
+        repeat: false
+        onTriggered: DaemonClient.restore()
       }
 
       Column {
