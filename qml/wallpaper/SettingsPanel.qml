@@ -591,6 +591,15 @@ Item {
           onToggle: function(v) { settingsPanel._saveConfigKey("features.videoAutoScale", v) }
         }
 
+        SettingsInput {
+          colors: settingsPanel.colors
+          label: "Random rotation interval (seconds)"
+          value: Config.randomInterval
+          min: 1
+          max: 86400
+          onCommit: function(v) { settingsPanel._saveConfigKey("general.randomInterval", v) }
+        }
+
       }
     }
 

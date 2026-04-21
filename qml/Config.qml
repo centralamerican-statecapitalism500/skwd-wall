@@ -81,6 +81,7 @@ QtObject {
     readonly property string locale: _data.general?.locale ?? ""
     readonly property bool closeOnSelection: _data.general?.closeOnSelection === true
     readonly property bool reopenAtLastSelection: _data.general?.reopenAtLastSelection === true
+    readonly property int randomInterval: _data.general?.randomInterval ?? 300
     readonly property bool wallpaperPerMonitor: _data.general?.wallpaperPerMonitor === true
 
     readonly property bool matugenEnabled: _data.features?.matugen !== false

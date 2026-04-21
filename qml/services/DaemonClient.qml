@@ -31,6 +31,11 @@ QtObject {
     signal wallpaperShow()
     signal wallpaperHide()
 
+    property bool randomRunning: false
+    property int randomInterval: 0
+    signal randomStarted(int interval)
+    signal randomStopped()
+
     function call(method, params, callback) {
         if (!_socket.connected) {
             if (callback) callback(null, {code: -1, message: "not connected"})
@@ -100,6 +105,22 @@ QtObject {
         call("wall.weather", {}, callback)
     }
 
+    function randomStart(intervalSecs, callback) {
+        call("wall.random_start", {interval: intervalSecs || 300}, callback)
+    }
+    function randomStop(callback) {
+        call("wall.random_stop", {}, callback)
+    }
+    function randomStatus(callback) {
+        call("wall.random_status", {}, function(result, err) {
+            if (!err && result) {
+                client.randomRunning = !!result.running
+                client.randomInterval = result.interval || 0
+            }
+            if (callback) callback(result, err)
+        })
+    }
+
     function stateGet(key, callback) {
         call("state.get", {key: key}, callback)
     }
@@ -167,6 +188,14 @@ QtObject {
             client.wallpaperShow(); break
         case "skwd.wall.hide":
             client.wallpaperHide(); break
+        case "skwd.wall.random_started":
+            client.randomRunning = true
+            client.randomInterval = data.interval || 0
+            client.randomStarted(client.randomInterval); break
+        case "skwd.wall.random_stopped":
+            client.randomRunning = false
+            client.randomInterval = 0
+            client.randomStopped(); break
         }
     }
 
@@ -184,6 +213,7 @@ QtObject {
                 console.log("DaemonClient: connected")
                 client.subscribe(["skwd."])
                 client.ready = true
+                client.randomStatus()
             } else {
                 console.log("DaemonClient: disconnected")
                 client.ready = false

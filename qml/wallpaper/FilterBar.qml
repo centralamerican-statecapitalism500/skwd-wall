@@ -135,6 +135,19 @@ Item {
             }
         }
 
+        FilterButton {
+            colors: filterBar.colors
+            icon: "\u{f049d}"
+            tooltip: DaemonClient.randomRunning
+                ? ("Stop random rotation (every " + DaemonClient.randomInterval + "s)")
+                : ("Random image. Toggle for continuous random pictures. Configure interval in settings.")
+            isActive: DaemonClient.randomRunning
+            onClicked: {
+                if (DaemonClient.randomRunning) DaemonClient.randomStop()
+                else DaemonClient.randomStart(Config.randomInterval)
+            }
+        }
+
         Repeater {
             model: 13
 
