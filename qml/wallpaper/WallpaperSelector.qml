@@ -102,6 +102,8 @@ Scope {
 
   onShowingChanged: {
     if (showing) {
+      _filterBarManuallyShown = Config.filterBarAlwaysVisible
+      tagCloudVisible = Config.searchBarAlwaysVisible
       if (Config.reopenAtLastSelection) {
         _restorePending = true
         DaemonClient.stateGet("ui.lastPosition", function(result) {
@@ -172,7 +174,7 @@ Scope {
 
       wallpaperSelector._preCommitIndex = sliceListView.currentIndex
 
-      if (service._skipCrossfade || service.filteredModel.count === 0 || !wallpaperSelector.cardVisible || wallpaperSelector.anyBrowserOpen || wallpaperSelector.isHexMode || wallpaperSelector.isGridMode) {
+      if (service._skipCrossfade || service.filteredModel.count === 0 || !wallpaperSelector.cardVisible || wallpaperSelector.anyBrowserOpen || wallpaperSelector.isHexMode || wallpaperSelector.isGridMode || wallpaperSelector.isMosaicMode) {
         service._skipCrossfade = false
         service.filterTransitioning = false
         service.commitFilteredModel()
@@ -264,19 +266,24 @@ Scope {
   property bool suppressWidthAnim: false
   property int topBarHeight: 50
   property bool tagCloudVisible: false
+  property bool _filterBarManuallyShown: Config.filterBarAlwaysVisible
+  property bool _filterBarHoverRevealed: false
+  readonly property bool _filterBarShown: _filterBarManuallyShown || _filterBarHoverRevealed
   property bool wallhavenBrowserOpen: false
   property bool steamWorkshopBrowserOpen: false
   property bool anyBrowserOpen: wallhavenBrowserOpen || steamWorkshopBrowserOpen
   property bool isHexMode: Config.displayMode === "hex"
   property bool isGridMode: Config.displayMode === "wall"
-  property bool isSliceMode: !isHexMode && !isGridMode
+  property bool isMosaicMode: Config.displayMode === "mosaic"
+  property bool isSliceMode: !isHexMode && !isGridMode && !isMosaicMode
 
   onIsHexModeChanged: if (showing) _bindActiveViewModel()
   onIsGridModeChanged: if (showing) _bindActiveViewModel()
+  onIsMosaicModeChanged: if (showing) _bindActiveViewModel()
 
   function _bindActiveViewModel() {
-    var _isSlice = !isHexMode && !isGridMode
-    console.log("[BIND] _isSlice=", _isSlice, "isHexMode=", isHexMode, "isGridMode=", isGridMode, "cardVisible=", cardVisible, "showing=", showing)
+    var _isSlice = !isHexMode && !isGridMode && !isMosaicMode
+    console.log("[BIND] _isSlice=", _isSlice, "isHexMode=", isHexMode, "isGridMode=", isGridMode, "isMosaicMode=", isMosaicMode, "cardVisible=", cardVisible, "showing=", showing)
     if (_isSlice) {
       sliceListView.model = Qt.binding(function() { return service.filteredModel })
       sliceListView.cacheBuffer = wallpaperSelector.expandedWidth
@@ -316,10 +323,10 @@ Scope {
   property int _gridTotalH: _gridCellH * Config.gridRows
   Behavior on _gridTotalH { NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
 
-  property int cardHeight: anyBrowserOpen ? 0 : (isHexMode ? hexGridHeight : (isGridMode ? _gridTotalH + topBarHeight + 35 : sliceHeight + topBarHeight + 60))
+  property int cardHeight: anyBrowserOpen ? 0 : (isHexMode ? hexGridHeight : (isGridMode ? _gridTotalH + topBarHeight + 35 : (isMosaicMode ? Config.mosaicHeight + topBarHeight + 60 : sliceHeight + topBarHeight + 60)))
   property int hexCardWidth: selectorPanel.width
   property int _sliceListW: Config.wallpaperExpandedWidth + (Config.wallpaperVisibleCount - 1) * (Config.wallpaperSliceWidth + Config.wallpaperSliceSpacing)
-  property int cardWidth: isHexMode ? hexCardWidth : (isGridMode ? _gridTotalW + 20 : Math.max(_sliceListW + 40, 600))
+  property int cardWidth: isHexMode ? hexCardWidth : (isGridMode ? _gridTotalW + 20 : (isMosaicMode ? Config.mosaicWidth + 20 : Math.max(_sliceListW + 40, 600)))
   Behavior on cardWidth { NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
   property int hexGridHeight: {
     var rows = hexRows
@@ -469,8 +476,48 @@ Scope {
         DaemonClient.retheme(Config.matugenScheme, mode)
       }
       visible: !wallpaperSelector.anyBrowserOpen
-      opacity: wallpaperSelector.anyBrowserOpen ? 0 : 1
+      enabled: wallpaperSelector._filterBarShown
+      opacity: (wallpaperSelector.anyBrowserOpen || !wallpaperSelector._filterBarShown) ? 0 : 1
       Behavior on opacity { NumberAnimation { duration: Style.animNormal } }
+
+      HoverHandler {
+        id: _filterBarHover
+        onHoveredChanged: {
+          if (hovered) wallpaperSelector._filterBarHoverRevealed = true
+          else _filterBarHideTimer.restart()
+        }
+      }
+    }
+
+    // Thin hover hot-zone at the top edge — reveals the filter bar even when
+    // the user has hidden it, so they can never get locked out.
+    MouseArea {
+      id: filterHoverZone
+      anchors.top: parent.top
+      anchors.left: parent.left
+      anchors.right: parent.right
+      height: wallpaperSelector._filterBarShown
+              ? (filterBarBg.y + filterBarBg.height + 12)
+              : 24
+      hoverEnabled: true
+      acceptedButtons: Qt.NoButton
+      propagateComposedEvents: true
+      visible: !wallpaperSelector.anyBrowserOpen
+      z: 9
+      onContainsMouseChanged: {
+        if (containsMouse) wallpaperSelector._filterBarHoverRevealed = true
+        else _filterBarHideTimer.restart()
+      }
+    }
+
+    Timer {
+      id: _filterBarHideTimer
+      interval: 250
+      repeat: false
+      onTriggered: {
+        if (!filterHoverZone.containsMouse && !_filterBarHover.hovered)
+          wallpaperSelector._filterBarHoverRevealed = false
+      }
     }
 
     }
@@ -581,7 +628,7 @@ Scope {
       boundsBehavior: Flickable.StopAtBounds
       cacheBuffer: wallpaperSelector.expandedWidth
 
-      visible: wallpaperSelector.cardVisible && !wallpaperSelector.anyBrowserOpen && !wallpaperSelector.isHexMode && !wallpaperSelector.isGridMode
+      visible: wallpaperSelector.cardVisible && !wallpaperSelector.anyBrowserOpen && !wallpaperSelector.isHexMode && !wallpaperSelector.isGridMode && !wallpaperSelector.isMosaicMode
 
       property bool keyboardNavActive: false
       property real lastMouseX: -1
@@ -678,7 +725,11 @@ Scope {
       Keys.onPressed: function(event) {
 
         if (event.modifiers & Qt.ShiftModifier) {
-          if (event.key === Qt.Key_Down) {
+          if (event.key === Qt.Key_Up) {
+            wallpaperSelector._filterBarManuallyShown = !wallpaperSelector._filterBarManuallyShown
+            event.accepted = true
+            return
+          } else if (event.key === Qt.Key_Down) {
             wallpaperSelector.tagCloudVisible = !wallpaperSelector.tagCloudVisible
             if (!wallpaperSelector.tagCloudVisible)
               wallpaperSelector._setSelectedTags([])
@@ -874,7 +925,11 @@ Scope {
 
       Keys.onPressed: function(event) {
         if (event.modifiers & Qt.ShiftModifier) {
-          if (event.key === Qt.Key_Down) {
+          if (event.key === Qt.Key_Up) {
+            wallpaperSelector._filterBarManuallyShown = !wallpaperSelector._filterBarManuallyShown
+            event.accepted = true
+            return
+          } else if (event.key === Qt.Key_Down) {
             wallpaperSelector.tagCloudVisible = !wallpaperSelector.tagCloudVisible
             if (!wallpaperSelector.tagCloudVisible)
               wallpaperSelector._setSelectedTags([])
@@ -1092,7 +1147,11 @@ Scope {
       }
 
       Keys.onUpPressed: function(event) {
-        if (event.modifiers & Qt.ShiftModifier) { event.accepted = false; return }
+        if (event.modifiers & Qt.ShiftModifier) {
+          wallpaperSelector._filterBarManuallyShown = !wallpaperSelector._filterBarManuallyShown
+          event.accepted = true
+          return
+        }
         var newIdx = currentIndex - Config.gridColumns
         if (newIdx >= 0) {
           currentIndex = newIdx
@@ -1389,6 +1448,25 @@ Scope {
           }
           }
         }
+      }
+    }
+
+    MosaicView {
+      id: mosaicView
+
+      anchors.top: cardContainer.top
+      anchors.topMargin: wallpaperSelector.topBarHeight + 35
+      anchors.horizontalCenter: parent.horizontalCenter
+      width: Config.mosaicWidth
+      height: Config.mosaicHeight
+
+      service: service
+      colors: wallpaperSelector.colors
+      active: wallpaperSelector.cardVisible && !wallpaperSelector.anyBrowserOpen && wallpaperSelector.isMosaicMode
+      visible: active
+
+      onItemActivated: function(item) {
+        if (item) wallpaperSelector._applyItem(item)
       }
     }
 

@@ -51,6 +51,26 @@ Item {
     readonly property real _topRight: skewOffset >= 0 ? width : width - _skAbs
     readonly property real _botRight: skewOffset >= 0 ? width - _skAbs : width
     readonly property real _botLeft: skewOffset >= 0 ? 0 : _skAbs
+    readonly property real _slantSx: _botLeft - _topLeft
+    readonly property real _slantLen: Math.max(0.001, Math.sqrt(_slantSx * _slantSx + height * height))
+    readonly property real _flatW: Math.max(0.001, _topRight - _topLeft)
+    property real animatedCornerRadius: Config.wallpaperSliceCornerRadius
+    Behavior on animatedCornerRadius { NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
+    readonly property real _rEff: Math.max(0, Math.min(animatedCornerRadius, _flatW / 2 - 1, _slantLen / 2 - 1))
+    readonly property real _rUx: _rEff * _slantSx / _slantLen
+    readonly property real _rUy: _rEff * height / _slantLen
+    readonly property real _tlInX: _topLeft + _rUx
+    readonly property real _tlInY: _rUy
+    readonly property real _tlOutX: _topLeft + _rEff
+    readonly property real _trInX: _topRight - _rEff
+    readonly property real _trOutX: _topRight + _rUx
+    readonly property real _trOutY: _rUy
+    readonly property real _brInX: _botRight - _rUx
+    readonly property real _brInY: height - _rUy
+    readonly property real _brOutX: _botRight - _rEff
+    readonly property real _blInX: _botLeft + _rEff
+    readonly property real _blOutX: _botLeft - _rUx
+    readonly property real _blOutY: height - _rUy
 
     property bool suppressWidthAnim: false
     property string videoPath: delegateItem.model.videoFile ? delegateItem.model.videoFile : ""
@@ -135,12 +155,16 @@ Item {
             ShapePath {
                 fillColor: "white"
                 strokeColor: "transparent"
-                startX: delegateItem._topLeft
+                startX: delegateItem._tlOutX
                 startY: 0
-                PathLine { x: delegateItem._topRight; y: 0 }
-                PathLine { x: delegateItem._botRight; y: delegateItem.height }
-                PathLine { x: delegateItem._botLeft; y: delegateItem.height }
-                PathLine { x: delegateItem._topLeft; y: 0 }
+                PathLine { x: delegateItem._trInX; y: 0 }
+                PathQuad { x: delegateItem._trOutX; y: delegateItem._trOutY; controlX: delegateItem._topRight; controlY: 0 }
+                PathLine { x: delegateItem._brInX; y: delegateItem._brInY }
+                PathQuad { x: delegateItem._brOutX; y: delegateItem.height; controlX: delegateItem._botRight; controlY: delegateItem.height }
+                PathLine { x: delegateItem._blInX; y: delegateItem.height }
+                PathQuad { x: delegateItem._blOutX; y: delegateItem._blOutY; controlX: delegateItem._botLeft; controlY: delegateItem.height }
+                PathLine { x: delegateItem._tlInX; y: delegateItem._tlInY }
+                PathQuad { x: delegateItem._tlOutX; y: 0; controlX: delegateItem._topLeft; controlY: 0 }
             }
         }
     }
@@ -178,12 +202,16 @@ Item {
         ShapePath {
             fillColor: "#000000"
             strokeColor: "transparent"
-            startX: delegateItem._topLeft
+            startX: delegateItem._tlOutX
             startY: 0
-            PathLine { x: delegateItem._topRight; y: 0 }
-            PathLine { x: delegateItem._botRight; y: delegateItem.height }
-            PathLine { x: delegateItem._botLeft; y: delegateItem.height }
-            PathLine { x: delegateItem._topLeft; y: 0 }
+            PathLine { x: delegateItem._trInX; y: 0 }
+            PathQuad { x: delegateItem._trOutX; y: delegateItem._trOutY; controlX: delegateItem._topRight; controlY: 0 }
+            PathLine { x: delegateItem._brInX; y: delegateItem._brInY }
+            PathQuad { x: delegateItem._brOutX; y: delegateItem.height; controlX: delegateItem._botRight; controlY: delegateItem.height }
+            PathLine { x: delegateItem._blInX; y: delegateItem.height }
+            PathQuad { x: delegateItem._blOutX; y: delegateItem._blOutY; controlX: delegateItem._botLeft; controlY: delegateItem.height }
+            PathLine { x: delegateItem._tlInX; y: delegateItem._tlInY }
+            PathQuad { x: delegateItem._tlOutX; y: 0; controlX: delegateItem._topLeft; controlY: 0 }
         }
     }
 
@@ -264,12 +292,16 @@ Item {
                     : Qt.rgba(0, 0, 0, 0.6))
             Behavior on strokeColor { ColorAnimation { duration: Style.animNormal } }
             strokeWidth: delegateItem.isCurrent ? 3 : 1
-            startX: delegateItem._topLeft
+            startX: delegateItem._tlOutX
             startY: 0
-            PathLine { x: delegateItem._topRight; y: 0 }
-            PathLine { x: delegateItem._botRight; y: delegateItem.height }
-            PathLine { x: delegateItem._botLeft; y: delegateItem.height }
-            PathLine { x: delegateItem._topLeft; y: 0 }
+            PathLine { x: delegateItem._trInX; y: 0 }
+            PathQuad { x: delegateItem._trOutX; y: delegateItem._trOutY; controlX: delegateItem._topRight; controlY: 0 }
+            PathLine { x: delegateItem._brInX; y: delegateItem._brInY }
+            PathQuad { x: delegateItem._brOutX; y: delegateItem.height; controlX: delegateItem._botRight; controlY: delegateItem.height }
+            PathLine { x: delegateItem._blInX; y: delegateItem.height }
+            PathQuad { x: delegateItem._blOutX; y: delegateItem._blOutY; controlX: delegateItem._botLeft; controlY: delegateItem.height }
+            PathLine { x: delegateItem._tlInX; y: delegateItem._tlInY }
+            PathQuad { x: delegateItem._tlOutX; y: 0; controlX: delegateItem._topLeft; controlY: 0 }
         }
     }
 
@@ -753,12 +785,16 @@ Item {
                 fillColor: "transparent"
                 strokeColor: delegateItem.colors ? delegateItem.colors.primary : "#8BC34A"
                 strokeWidth: 2
-                startX: delegateItem._topLeft
+                startX: delegateItem._tlOutX
                 startY: 0
-                PathLine { x: delegateItem._topRight; y: 0 }
-                PathLine { x: delegateItem._botRight; y: delegateItem.height }
-                PathLine { x: delegateItem._botLeft; y: delegateItem.height }
-                PathLine { x: delegateItem._topLeft; y: 0 }
+                PathLine { x: delegateItem._trInX; y: 0 }
+                PathQuad { x: delegateItem._trOutX; y: delegateItem._trOutY; controlX: delegateItem._topRight; controlY: 0 }
+                PathLine { x: delegateItem._brInX; y: delegateItem._brInY }
+                PathQuad { x: delegateItem._brOutX; y: delegateItem.height; controlX: delegateItem._botRight; controlY: delegateItem.height }
+                PathLine { x: delegateItem._blInX; y: delegateItem.height }
+                PathQuad { x: delegateItem._blOutX; y: delegateItem._blOutY; controlX: delegateItem._botLeft; controlY: delegateItem.height }
+                PathLine { x: delegateItem._tlInX; y: delegateItem._tlInY }
+                PathQuad { x: delegateItem._tlOutX; y: 0; controlX: delegateItem._topLeft; controlY: 0 }
             }
         }
     }

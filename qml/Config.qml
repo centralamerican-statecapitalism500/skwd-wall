@@ -81,7 +81,13 @@ QtObject {
     readonly property string locale: _data.general?.locale ?? ""
     readonly property bool closeOnSelection: _data.general?.closeOnSelection === true
     readonly property bool reopenAtLastSelection: _data.general?.reopenAtLastSelection === true
+    readonly property bool filterBarAlwaysVisible: _data.general?.filterBarAlwaysVisible !== false
+    readonly property bool searchBarAlwaysVisible: _data.general?.searchBarAlwaysVisible === true
     readonly property int randomInterval: _data.general?.randomInterval ?? 300
+    readonly property bool randomIncludeStatic: _data.general?.randomIncludeStatic !== false
+    readonly property bool randomIncludeVideo: _data.general?.randomIncludeVideo !== false
+    readonly property bool randomIncludeWE: _data.general?.randomIncludeWE !== false
+    readonly property bool randomIncludeFavourites: _data.general?.randomIncludeFavourites !== false
     readonly property bool wallpaperPerMonitor: _data.general?.wallpaperPerMonitor === true
 
     readonly property bool matugenEnabled: _data.features?.matugen !== false
@@ -168,6 +174,8 @@ QtObject {
     readonly property int wallpaperSliceWidth: _wallpaperSelector.sliceWidth ?? (_isSmallScreen ? 90 : 135)
     readonly property int wallpaperSliceSpacing: _wallpaperSelector.sliceSpacing ?? -30
     readonly property int wallpaperSkewOffset: _wallpaperSelector.skewOffset ?? (_isSmallScreen ? 25 : 35)
+    readonly property bool wallpaperSliceRoundCorners: _wallpaperSelector.roundCorners === true
+    readonly property int wallpaperSliceCornerRadius: wallpaperSliceRoundCorners ? (_wallpaperSelector.cornerRadius ?? 16) : 0
     readonly property var wallpaperCustomPresets: _wallpaperSelector.customPresets ?? {}
 
     readonly property string displayMode: _wallpaperSelector.displayMode ?? "slices"
@@ -182,6 +190,12 @@ QtObject {
     readonly property int gridRows: _wallpaperSelector.gridRows ?? 3
     readonly property int gridThumbWidth: _wallpaperSelector.gridThumbWidth ?? (_isSmallScreen ? 220 : 300)
     readonly property int gridThumbHeight: _wallpaperSelector.gridThumbHeight ?? (_isSmallScreen ? 124 : 169)
+
+    readonly property int mosaicCells: _wallpaperSelector.mosaicCells ?? (_isSmallScreen ? 30 : 48)
+    readonly property int mosaicSeed: _wallpaperSelector.mosaicSeed ?? 7
+    readonly property int mosaicRelaxation: _wallpaperSelector.mosaicRelaxation ?? 2
+    readonly property int mosaicWidth: _wallpaperSelector.mosaicWidth ?? (_isSmallScreen ? 1100 : 1500)
+    readonly property int mosaicHeight: _wallpaperSelector.mosaicHeight ?? (_isSmallScreen ? 600 : 800)
 
     readonly property int wallhavenColumns: _wallpaperSelector.wallhavenColumns ?? (_isSmallScreen ? 4 : 6)
     readonly property int wallhavenRows: _wallpaperSelector.wallhavenRows ?? 3

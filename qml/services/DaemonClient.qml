@@ -105,8 +105,13 @@ QtObject {
         call("wall.weather", {}, callback)
     }
 
-    function randomStart(intervalSecs, callback) {
-        call("wall.random_start", {interval: intervalSecs || 300}, callback)
+    function randomStart(intervalSecs, options, callback) {
+        var params = {interval: intervalSecs || 300}
+        if (options) {
+            if (options.types) params.types = options.types
+            if (options.favouritesOnly !== undefined) params.favourites_only = !!options.favouritesOnly
+        }
+        call("wall.random_start", params, callback)
     }
     function randomStop(callback) {
         call("wall.random_stop", {}, callback)

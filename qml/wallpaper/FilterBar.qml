@@ -136,15 +136,67 @@ Item {
         }
 
         FilterButton {
+            id: _randomBtn
             colors: filterBar.colors
             icon: "\u{f049d}"
             tooltip: DaemonClient.randomRunning
                 ? ("Stop random rotation (every " + DaemonClient.randomInterval + "s)")
-                : ("Random image. Toggle for continuous random pictures. Configure interval in settings.")
+                : ("Random wallpaper. Toggle for continuous random wallpapers. Configure interval in settings.")
             isActive: DaemonClient.randomRunning
             onClicked: {
-                if (DaemonClient.randomRunning) DaemonClient.randomStop()
-                else DaemonClient.randomStart(Config.randomInterval)
+                if (DaemonClient.randomRunning) { DaemonClient.randomStop(); return }
+                var types = []
+                if (Config.randomIncludeStatic) types.push("static")
+                if (Config.randomIncludeVideo) types.push("video")
+                if (Config.randomIncludeWE) types.push("we")
+                if (types.length === 0) {
+                    _randomWarnPopup.open()
+                    return
+                }
+                DaemonClient.randomStart(Config.randomInterval, {
+                    types: types,
+                    favouritesOnly: Config.randomIncludeFavourites
+                })
+            }
+
+            Popup {
+                id: _randomWarnPopup
+                parent: _randomBtn
+                x: (_randomBtn.width - width) / 2
+                y: _randomBtn.height + 6
+                padding: 10
+                modal: false
+                focus: false
+                closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
+                background: Rectangle {
+                    color: filterBar.colors ? Qt.rgba(filterBar.colors.surface.r, filterBar.colors.surface.g, filterBar.colors.surface.b, 0.97) : Qt.rgba(0.08, 0.08, 0.12, 0.97)
+                    radius: 8
+                    border.width: 1
+                    border.color: "#ffb74d"
+                }
+                contentItem: Row {
+                    spacing: 8
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "\u{f0028}"
+                        font.family: Style.fontFamilyNerdIcons
+                        font.pixelSize: 16
+                        color: "#ffb74d"
+                    }
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "Select at least one random source category in settings"
+                        font.family: Style.fontFamily
+                        font.pixelSize: 11
+                        font.letterSpacing: 0.2
+                        color: filterBar.colors ? filterBar.colors.surfaceText : "#fff"
+                    }
+                }
+                Timer {
+                    interval: 4000
+                    running: _randomWarnPopup.visible
+                    onTriggered: _randomWarnPopup.close()
+                }
             }
         }
 

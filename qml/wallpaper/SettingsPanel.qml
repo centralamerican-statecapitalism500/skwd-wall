@@ -1,3 +1,4 @@
+
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Shapes
@@ -79,7 +80,7 @@ Item {
   }
 
   z: 102
-  width: settingsPanel.activeTab === "performance" ? 780 : 580
+  width: settingsPanel.activeTab === "performance" || settingsPanel.activeTab === "general" ? 780 : 580
   Behavior on width { NumberAnimation { duration: Style.animFast; easing.type: Easing.OutCubic } }
   height: tabRow.height + contentLoader.height + 36
 
@@ -138,6 +139,12 @@ Item {
     }
     obj[parts[parts.length - 1]] = value
     _selectorConfigFile.setText(JSON.stringify(data, null, 2) + "\n")
+  }
+
+  function _showWarning(title, message) {
+    _warningPopup.title = title
+    _warningPopup.message = message
+    _warningPopup.open()
   }
 
   function _applyPreset(expanded, sliceH, sliceW, visible, gap, skew) {
@@ -298,8 +305,16 @@ Item {
       visible: settingsPanel.activeTab === "selector"
       spacing: 12
 
+      readonly property bool _slicesMode: Config.displayMode === "slices"
+      readonly property int _segCount: _slicesMode ? 4 : 3
+      readonly property real _availW: width - spacing * (2 * _segCount - 2) - (_segCount - 1)
+      readonly property real _w1: _availW * 0.38
+      readonly property real _w2: _availW * (_slicesMode ? 0.22 : 0.31)
+      readonly property real _w3: _availW * (_slicesMode ? 0.22 : 0.31)
+      readonly property real _w4: _availW * 0.18
+
       Column {
-        width: (parent.width - parent.spacing * 4 - 2) * 0.38
+        width: parent._w1
         spacing: 8
 
         Text {
@@ -314,14 +329,19 @@ Item {
             model: [
               { key: "slices",  label: "Slices" },
               { key: "hex",     label: "Hex" },
-              { key: "wall",    label: "Wall" }
+              { key: "wall",    label: "Wall" },
+              { key: "mosaic",  label: "Mosaic" }
             ]
             FilterButton {
               colors: settingsPanel.colors
               label: modelData.label
               skew: 8; height: 26
               isActive: Config.displayMode === modelData.key
-              onClicked: settingsPanel._saveField("displayMode", modelData.key)
+              onClicked: {
+                if (modelData.key === "mosaic" && Config.displayMode !== "mosaic")
+                  settingsPanel._showWarning("MOSAIC IS EXPERIMENTAL", "Not all features work yet. Please do not expect everything to function correctly.")
+                settingsPanel._saveField("displayMode", modelData.key)
+              }
             }
           }
         }
@@ -402,11 +422,11 @@ Item {
       }
 
       Column {
-        width: (parent.width - parent.spacing * 4 - 2) * 0.30
+        width: parent._w2
         spacing: 6
 
         Text {
-          text: Config.displayMode === "hex" ? "HEX GRID" : (Config.displayMode === "wall" ? "WALL" : "SIZE")
+          text: Config.displayMode === "hex" ? "HEX GRID" : (Config.displayMode === "wall" ? "WALL" : (Config.displayMode === "mosaic" ? "MOSAIC" : "SIZE"))
           font.family: Style.fontFamily; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 1.5
           color: settingsPanel.colors ? settingsPanel.colors.tertiary : Qt.rgba(1, 1, 1, 0.5)
         }
@@ -424,6 +444,12 @@ Item {
         SettingsInput { visible: Config.displayMode === "wall"; colors: settingsPanel.colors; label: "Rows"; value: Config.gridRows; min: 1; max: 8; onCommit: function(n) { settingsPanel._saveField("gridRows", n) } }
         SettingsInput { visible: Config.displayMode === "wall"; colors: settingsPanel.colors; label: "Thumb width"; value: Config.gridThumbWidth; min: 100; max: 600; onCommit: function(n) { settingsPanel._saveField("gridThumbWidth", n) } }
         SettingsInput { visible: Config.displayMode === "wall"; colors: settingsPanel.colors; label: "Thumb height"; value: Config.gridThumbHeight; min: 50; max: 400; onCommit: function(n) { settingsPanel._saveField("gridThumbHeight", n) } }
+
+        SettingsInput { visible: Config.displayMode === "mosaic"; colors: settingsPanel.colors; label: "Cells"; value: Config.mosaicCells; min: 4; max: 200; onCommit: function(n) { settingsPanel._saveField("mosaicCells", n) } }
+        SettingsInput { visible: Config.displayMode === "mosaic"; colors: settingsPanel.colors; label: "Seed"; value: Config.mosaicSeed; min: 1; max: 99999; onCommit: function(n) { settingsPanel._saveField("mosaicSeed", n) } }
+        SettingsInput { visible: Config.displayMode === "mosaic"; colors: settingsPanel.colors; label: "Relax iterations"; value: Config.mosaicRelaxation; min: 0; max: 8; onCommit: function(n) { settingsPanel._saveField("mosaicRelaxation", n) } }
+        SettingsInput { visible: Config.displayMode === "mosaic"; colors: settingsPanel.colors; label: "Width"; value: Config.mosaicWidth; min: 400; max: 3000; onCommit: function(n) { settingsPanel._saveField("mosaicWidth", n) } }
+        SettingsInput { visible: Config.displayMode === "mosaic"; colors: settingsPanel.colors; label: "Height"; value: Config.mosaicHeight; min: 200; max: 2000; onCommit: function(n) { settingsPanel._saveField("mosaicHeight", n) } }
       }
 
       Rectangle {
@@ -432,7 +458,7 @@ Item {
       }
 
       Column {
-        width: (parent.width - parent.spacing * 4 - 2) * 0.30
+        width: parent._w3
         spacing: 6
 
         Text {
@@ -469,6 +495,41 @@ Item {
           wrapMode: Text.Wrap
         }
       }
+
+      Rectangle {
+        visible: Config.displayMode === "slices"
+        width: 1; anchors.top: parent.top; anchors.bottom: parent.bottom
+        color: settingsPanel.colors ? Qt.rgba(settingsPanel.colors.primary.r, settingsPanel.colors.primary.g, settingsPanel.colors.primary.b, 0.1) : Qt.rgba(1, 1, 1, 0.08)
+      }
+
+      Column {
+        visible: Config.displayMode === "slices"
+        width: parent._w4
+        spacing: 6
+
+        Text {
+          text: "CORNERS"
+          font.family: Style.fontFamily; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 1.5
+          color: settingsPanel.colors ? settingsPanel.colors.tertiary : Qt.rgba(1, 1, 1, 0.5)
+        }
+
+        SettingsToggle {
+          colors: settingsPanel.colors
+          label: "Round corners"
+          checked: Config.wallpaperSliceRoundCorners
+          onToggle: function(v) { settingsPanel._saveField("roundCorners", v) }
+        }
+
+        SettingsInput {
+          visible: Config.wallpaperSliceRoundCorners
+          colors: settingsPanel.colors
+          label: "Radius"
+          value: Config.wallpaperSliceCornerRadius
+          min: 0
+          max: 80
+          onCommit: function(n) { settingsPanel._saveField("cornerRadius", n) }
+        }
+      }
     }
 
     Row {
@@ -479,7 +540,7 @@ Item {
       spacing: 12
 
       Column {
-        width: (parent.width - 24) / 3
+        width: (parent.width - 36) / 4
         spacing: 6
 
         Text {
@@ -515,7 +576,7 @@ Item {
       }
 
       Column {
-        width: (parent.width - 24) / 3
+        width: (parent.width - 36) / 4
         spacing: 6
 
         Text {
@@ -584,7 +645,7 @@ Item {
       }
 
       Column {
-        width: (parent.width - 24) / 3
+        width: (parent.width - 36) / 4
         spacing: 6
 
         Text {
@@ -609,18 +670,86 @@ Item {
 
         SettingsToggle {
           colors: settingsPanel.colors
+          label: "Always show filter bar"
+          checked: Config.filterBarAlwaysVisible
+          onToggle: function(v) { settingsPanel._saveConfigKey("general.filterBarAlwaysVisible", v) }
+        }
+
+        SettingsToggle {
+          colors: settingsPanel.colors
+          label: "Always show search bar"
+          checked: Config.searchBarAlwaysVisible
+          onToggle: function(v) { settingsPanel._saveConfigKey("general.searchBarAlwaysVisible", v) }
+        }
+
+        SettingsToggle {
+          colors: settingsPanel.colors
           label: "Video auto scale"
           checked: Config.videoAutoScale
           onToggle: function(v) { settingsPanel._saveConfigKey("features.videoAutoScale", v) }
         }
+      }
+
+      Column {
+        width: (parent.width - 36) / 4
+        spacing: 6
+
+        Text {
+          text: "RANDOM"
+          font.family: Style.fontFamily; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 1.5
+          color: settingsPanel.colors ? settingsPanel.colors.tertiary : Qt.rgba(1, 1, 1, 0.5)
+        }
 
         SettingsInput {
           colors: settingsPanel.colors
-          label: "Random rotation interval (seconds)"
+          label: "Rotation interval (seconds)"
           value: Config.randomInterval
           min: 1
           max: 86400
           onCommit: function(v) { settingsPanel._saveConfigKey("general.randomInterval", v) }
+        }
+
+        Text {
+          text: "SOURCES"
+          font.family: Style.fontFamily; font.pixelSize: 11; font.weight: Font.Bold; font.letterSpacing: 1.2
+          color: settingsPanel.colors ? Qt.rgba(settingsPanel.colors.tertiary.r, settingsPanel.colors.tertiary.g, settingsPanel.colors.tertiary.b, 0.8) : Qt.rgba(1, 1, 1, 0.4)
+          topPadding: 4
+        }
+
+        SettingsToggle {
+          colors: settingsPanel.colors
+          label: "Images"
+          checked: Config.randomIncludeStatic
+          onToggle: function(v) {
+            if (!v && !Config.randomIncludeVideo && !Config.randomIncludeWE) return
+            settingsPanel._saveConfigKey("general.randomIncludeStatic", v)
+          }
+        }
+        SettingsToggle {
+          colors: settingsPanel.colors
+          label: "Video"
+          checked: Config.randomIncludeVideo
+          onToggle: function(v) {
+            if (!v && !Config.randomIncludeStatic && !Config.randomIncludeWE) return
+            settingsPanel._saveConfigKey("general.randomIncludeVideo", v)
+          }
+        }
+        SettingsToggle {
+          colors: settingsPanel.colors
+          label: "WE"
+          checked: Config.randomIncludeWE
+          onToggle: function(v) {
+            if (!v && !Config.randomIncludeStatic && !Config.randomIncludeVideo) return
+            settingsPanel._saveConfigKey("general.randomIncludeWE", v)
+          }
+        }
+        SettingsToggle {
+          colors: settingsPanel.colors
+          label: "Favourites"
+          checked: Config.randomIncludeFavourites
+          onToggle: function(v) {
+            settingsPanel._saveConfigKey("general.randomIncludeFavourites", v)
+          }
         }
 
       }
@@ -777,7 +906,7 @@ Item {
           label: "Wallpaper directory"
           value: Config.wallpaperDir
           placeholder: "~/Pictures/Wallpapers"
-          onFocused: function() { _restartWarningPopup.open() }
+          onFocused: function() { settingsPanel._showWarning("RESTART REQUIRED", "Directory changes will take effect after restarting the app. Don't forget that includes the daemon!") }
           onCommit: function(v) { settingsPanel._saveConfigKey("paths.wallpaper", v) }
         }
 
@@ -786,7 +915,7 @@ Item {
           label: "Video directory"
           value: Config.videoDir
           placeholder: "(same as wallpaper directory)"
-          onFocused: function() { _restartWarningPopup.open() }
+          onFocused: function() { settingsPanel._showWarning("RESTART REQUIRED", "Directory changes will take effect after restarting the app. Don't forget that includes the daemon!") }
           onCommit: function(v) { settingsPanel._saveConfigKey("paths.videoWallpaper", v) }
         }
       }
@@ -1871,6 +2000,7 @@ Item {
         Repeater {
           model: [
             { key: "Shift + ← / →",  action: "Cycle colour filters" },
+            { key: "Shift + ↑",      action: "Toggle filter bar" },
             { key: "Shift + ↓",      action: "Toggle tag cloud" },
             { key: "Tab",            action: "Auto-complete tag" },
             { key: "Enter",          action: "Add tag (in tag input)" },
@@ -2177,12 +2307,15 @@ Item {
   }
 
   Rectangle {
-    id: _restartWarningPopup
+    id: _warningPopup
     visible: false
     anchors.fill: parent
     z: 200
     color: settingsPanel.colors ? Qt.rgba(settingsPanel.colors.surface.r, settingsPanel.colors.surface.g, settingsPanel.colors.surface.b, 0.97) : Qt.rgba(0.08, 0.08, 0.12, 0.97)
     radius: 8
+
+    property string title: "RESTART REQUIRED"
+    property string message: "Directory changes will take effect after restarting the app. Don't forget that includes the daemon!"
 
     function open() { visible = true }
     function close() { visible = false }
@@ -2203,7 +2336,7 @@ Item {
 
       Text {
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "RESTART REQUIRED"
+        text: _warningPopup.title
         font.family: Style.fontFamily; font.pixelSize: 14; font.weight: Font.Bold; font.letterSpacing: 1.5
         color: settingsPanel.colors ? settingsPanel.colors.surfaceText : "#fff"
       }
@@ -2211,7 +2344,7 @@ Item {
       Text {
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
-        text: "Directory changes will take effect after restarting the app. Don't forget that includes the daemon!"
+        text: _warningPopup.message
         font.family: Style.fontFamily; font.pixelSize: 11; font.letterSpacing: 0.2
         color: settingsPanel.colors ? Qt.rgba(settingsPanel.colors.surfaceText.r, settingsPanel.colors.surfaceText.g, settingsPanel.colors.surfaceText.b, 0.6) : Qt.rgba(1, 1, 1, 0.5)
         wrapMode: Text.WordWrap
@@ -2226,7 +2359,7 @@ Item {
         label: "OK"
         skew: 8; height: 26
         isActive: true
-        onClicked: _restartWarningPopup.close()
+        onClicked: _warningPopup.close()
       }
     }
   }
