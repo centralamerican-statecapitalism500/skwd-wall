@@ -16,11 +16,11 @@
 ![NixOS](https://img.shields.io/badge/NixOS-5277C3?style=for-the-badge&logo=nixos&logoColor=white)
 
 <img alt="image" src="https://github.com/user-attachments/assets/157100e4-88e5-4542-8eba-fea0576e8801" />
+<img alt="image" src="https://github.com/user-attachments/assets/f9030c46-5984-4bba-850c-6bcbf552d987" />
 <img alt="image" src="https://github.com/user-attachments/assets/367a6a0d-a384-490d-abe2-98c053ff9ffc" />
 <img alt="image" src="https://github.com/user-attachments/assets/b73eff46-fa62-40cd-9109-9170adaa1dc5" />
 <img alt="image" src="https://github.com/user-attachments/assets/577611da-d03d-4bf7-88c3-69b782cac668" />
 <img alt="image" src="https://github.com/user-attachments/assets/a221355a-2530-42bb-a9c1-54d31062c7af" />
-<img alt="image" src="https://github.com/user-attachments/assets/533f01d9-598b-4f02-881d-86cda7f28749" />
 
 
 ### A video is a thousand pictures - Sun Tzu (probably)
