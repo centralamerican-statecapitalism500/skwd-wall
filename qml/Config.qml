@@ -89,6 +89,8 @@ QtObject {
     readonly property bool randomIncludeWE: _data.general?.randomIncludeWE !== false
     readonly property bool randomIncludeFavourites: _data.general?.randomIncludeFavourites !== false
     readonly property bool wallpaperPerMonitor: _data.general?.wallpaperPerMonitor === true
+    readonly property bool notifyOnWallpaperChange: _data.general?.notifyOnWallpaperChange !== false
+    readonly property string notificationsBuiltIn: _data.notifications?.builtIn ?? "auto"
 
     readonly property bool matugenEnabled: _data.features?.matugen !== false
     readonly property bool ollamaEnabled: _data.features?.ollama !== false

@@ -35,7 +35,12 @@ QtObject {
     property bool _restoring: false
 
     signal wallpaperApplied(string type, string name, string path)
-    onWallpaperApplied: { _runPostProcessing(type, name, path); _restoring = false }
+    onWallpaperApplied: {
+        _runPostProcessing(type, name, path)
+        if (!_restoring && Config.notifyOnWallpaperChange)
+            _runReload("command -v notify-send >/dev/null && notify-send 'Wallpaper Changed' || true")
+        _restoring = false
+    }
 
     function applyStatic(path) {
         console.log("WallpaperApplyService.applyStatic:", path, "wallpaperDir:", wallpaperDir)
@@ -397,7 +402,6 @@ QtObject {
                 _runReload(resolved)
         }
 
-        _runReload("command -v notify-send >/dev/null && notify-send 'Wallpaper Changed' || true")
     }
 
     function _runReload(cmd) {
